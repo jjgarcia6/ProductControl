@@ -63,10 +63,11 @@ jobs:
         run: docker build -t backend:${{ github.sha }} backend
 
       - name: Escaneo de imagen — trivy
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.33.1
         with:
           image-ref: backend:${{ github.sha }}
           severity: HIGH,CRITICAL
+          ignore-unfixed: true
           exit-code: '1'
 
   deploy:

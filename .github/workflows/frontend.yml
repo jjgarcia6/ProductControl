@@ -41,8 +41,8 @@ jobs:
       - name: Tests — vitest
         run: npm test
 
-      - name: Instalar WebKit (Safari iOS)
-        run: npx playwright install --with-deps webkit
+      - name: Instalar navegadores (Chromium + WebKit/Safari iOS)
+        run: npx playwright install --with-deps chromium webkit
 
       - name: E2E cross-browser — playwright (WebKit)
         run: npx playwright test
