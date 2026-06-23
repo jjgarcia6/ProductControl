@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Design tokens (config.yaml — sistema visual). Variables CSS de shadcn en :root y .dark.
+  Tailwind extiende su theme desde estas variables (ver tailwind.config.js).
+  CERO hex literales en componentes: todo color sale de un token.
+
+  - Acento índigo frío (--primary), SEPARADO de los estados.
+  - Semánticos (success/warning/danger/info) EXCLUSIVOS de estados; nunca decorativos.
+  - Neutros cálidos de baja saturación (lenguaje Notion/Claude).
+*/
+
+@layer base {
+  :root {
+    /* Neutros — modo claro */
+    --background: #faf9f7;
+    --surface: #ffffff;
+    --foreground: #20201e;
+    --muted-foreground: #6f6e69;
+    --border: #e9e7e1;
+
+    /* Acento índigo frío (modo claro) */
+    --primary: #4f52c9;
+    --primary-foreground: #ffffff;
+
+    /* Semánticos de estado (modo claro) */
+    --success: #3e875a;
+    --warning: #b07d1c;
+    --danger: #be4940;
+    --info: #3c6fa2;
+
+    /* Radios: sm 4 / md 8 / lg 12 / pill 999 */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-pill: 999px;
+  }
+
+  .dark {
+    /* Neutros — modo oscuro */
+    --background: #191816;
+    --surface: #232220;
+    --foreground: #eceae5;
+    --muted-foreground: #a29f99;
+    --border: #312e2a;
+
+    /* Acento índigo frío (modo oscuro) */
+    --primary: #8488e6;
+    --primary-foreground: #191816;
+
+    /* Semánticos de estado (modo oscuro) */
+    --success: #67b083;
+    --warning: #d9a53f;
+    --danger: #de7269;
+    --info: #6b97c4;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    margin: 0;
+    /* Tipografía del sistema (neutral, no Inter/Roboto/Arial). */
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Cifras de tablas y dashboards: numeración tabular. */
+  table,
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* IDs / códigos de documento en mono del sistema. */
+  code,
+  .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+}

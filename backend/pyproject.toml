@@ -1,0 +1,87 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Sistema de gestión operativa — backend Django + DRF"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=5.2,<5.3",
+    "django-cors-headers>=4.9.0",
+    "django-ratelimit>=4.1.0",
+    "djangorestframework>=3.17.1",
+    "djangorestframework-simplejwt>=5.5.1",
+    "drf-spectacular>=0.29.0",
+    "google-cloud-storage>=3.12.0",
+    "gunicorn>=26.0.0",
+    "openpyxl>=3.1.5",
+    "psycopg[binary]>=3.3.4",
+    "python-dotenv>=1.2.2",
+    "weasyprint>=69.0",
+]
+
+[dependency-groups]
+dev = [
+    "bandit>=1.9.4",
+    "django-stubs>=6.0.6",
+    "djangorestframework-stubs>=3.17.0",
+    "mypy>=2.1.0",
+    "pip-audit>=2.10.1",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-django>=4.12.0",
+    "ruff>=0.15.18",
+]
+
+# ---------------------------------------------------------------------------
+# Tooling de calidad (§4.6)
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint]
+# E/F (pyflakes+pycodestyle), I (isort), UP (pyupgrade), B (bugbear), DJ (flake8-django)
+select = ["E", "F", "I", "UP", "B", "DJ"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+exclude = ['migrations/']
+# Las migraciones de Django son generadas; no se les exige tipado estricto.
+[[tool.mypy.overrides]]
+module = "*.migrations.*"
+ignore_errors = true
+
+# Los tests no exigen anotaciones (los asserts de pytest no son tipables sin ruido).
+[[tool.mypy.overrides]]
+module = "*.tests.*"
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+
+[tool.django-stubs]
+django_settings_module = "config.settings.dev"
+
+[tool.bandit]
+# SAST sobre apps/ y config/. Se excluyen tests (assert es esperado) y migraciones.
+exclude_dirs = ["tests", "migrations", ".venv"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.dev"
+python_files = ["tests.py", "test_*.py", "*_test.py"]
+addopts = "--cov=apps --cov=config --cov-report=term-missing --cov-fail-under=80"
+
+[tool.coverage.run]
+# Se mide la lógica (apps/ + settings/base+dev). Se omite la configuración de
+# despliegue que no corre bajo dev (prod.py, urls, wsgi/asgi) y los andamios.
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "config/wsgi.py",
+    "config/asgi.py",
+    "config/urls.py",
+    "config/settings/prod.py",
+    "manage.py",
+]

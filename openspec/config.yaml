@@ -1,0 +1,215 @@
+schema: spec-driven
+
+context: |
+  # Contexto global del proyecto — Sistema de gestión operativa
+
+  ## Dominio de negocio
+  - Sistema web para una empresa de compra y venta de productos alimenticios perecibles
+    (pollo entero, pollo al vacío, menudencia, carne de res, carne porcina).
+  - Reemplaza controles manuales en hojas de cálculo.
+  - 14 módulos: Directorio, Productos/UoM, Kardex (despiece + FIFO), Ingresos de mercadería
+    (4 estados), Rutas, Pedidos, Entregas, Devoluciones, Cobros (CxC), Pagos a proveedores
+    (CxP + notas de crédito), Notificaciones, Reportes/Dashboards, Cierre mensual, Merma.
+  - Trazabilidad obligatoria: Ingreso -> Kardex (despiece/merma) -> Entrega -> Cobro,
+    y Ingreso -> CxP -> Pago.
+
+  ## Convenciones de lenguaje
+  - Documentación y lógica de negocio: español.
+  - Código fuente, rutas de API e identificadores técnicos: inglés, incluidos los términos de dominio.
+  - Cada término de dominio MUST usar un único equivalente en inglés, consistente en todo el código y la API (glosario ES->EN a definir y mantener).
+  - Estándar de redacción de reglas y requisitos: RFC 2119 con keywords en inglés (MUST, MUST NOT, SHOULD, SHOULD NOT, MAY, REQUIRED).
+
+  ## Arquitectura
+  - Monorepo: `backend/` (Django + DRF) y `frontend/` (React + Vite). La CI MUST disparar
+    pipelines por path (solo corre backend si cambió `backend/`).
+  - Contrato Inter-App: el Backend ES la fuente de verdad (schema OpenAPI de DRF). El Frontend
+    MUST espejar los tipos GENERÁNDOLOS desde el OpenAPI (TypeScript + Zod). NUNCA al revés.
+    Los esquemas Zod se GENERAN del OpenAPI; MUST NOT escribirse a mano (sería segunda fuente
+    de verdad).
+  - Despliegue: backend en GCP Cloud Run (contenedor Docker, escala a cero); frontend en Vercel
+    (build de Vite, NO contenedor). Docker MUST NOT usarse como ruta de despliegue del frontend.
+
+  ## Stack Backend (Python 3.12+)
+  - Framework: Django 5.2 LTS + Django REST Framework. Versiones pineadas exactas en `uv.lock`.
+  - Autenticación: djangorestframework-simplejwt (FIJO; NO Supabase Auth). Access 15 min /
+    refresh 7 días. Autorización por rol y por perfil en DRF (invisibilidad de campos por perfil).
+  - Base de datos: PostgreSQL en Supabase, usado SOLO como PostgreSQL hosteado. NO se usan
+    Auth, Realtime ni Storage de Supabase (portabilidad).
+  - Rate limiting: django-ratelimit. CORS: django-cors-headers (solo el dominio de Vercel).
+  - Reportes: WeasyPrint (PDF), openpyxl (XLSX).
+  - Tareas programadas: GCP Cloud Scheduler -> endpoint OIDC en Cloud Run; 1 job diario
+    idempotente. NO Celery, NO worker persistente, NO broker (rompen el escalado a cero).
+  - Almacenamiento: Google Cloud Storage SOLO como destino de respaldos `pg_dump`
+    (bucket privado, sin URLs públicas).
+  - Secretos: GCP Secret Manager. NUNCA credenciales en el repositorio.
+  - Package manager: `uv` sobre `pyproject.toml`.
+  - Testing: pytest + coverage.
+
+  ## Stack Frontend (Vite + React)
+  - Framework: React 19 + Vite + TypeScript en strict mode. Versiones pineadas en lockfile.
+  - Meta-framework: Refine v5 (CRUD headless). React Query vive DENTRO de Refine; MUST NOT
+    montarse un setup paralelo de TanStack Query.
+  - Estado: Zustand SOLO para estado de UI/sesión (tema, sidebar, filtros). NUNCA para estado
+    de servidor (eso lo gestiona Refine).
+  - Formularios: React Hook Form + Zod resolver (Zod generado del OpenAPI).
+  - UI: Tailwind CSS + shadcn/ui + Lucide React.
+  - Arquitectura UI: feature-driven organizada alrededor de los resources de Refine:
+    `src/features/[feature]/` con `components/`, `hooks/`, `types/`. Lógica compartida entre
+    features en `src/shared/`. Componentes visuales reutilizables en `@/components/custom/`.
+  - Páginas (`src/pages/`): dumb pages, sin lógica de estado ni llamadas directas a la API;
+    lo asíncrono se encapsula en custom hooks dentro de `features/`.
+  - Testing: Vitest + React Testing Library (unit/componente) + Playwright (E2E y cross-browser,
+    incluye el motor WebKit para validar Safari/iOS desde CI).
+  - Multiplataforma: web responsive sobre navegador en PC, tablet Android e iOS. El QA
+    cross-browser MUST incluir Safari iOS (inputs numéricos decimales y fechas).
+
+  ## Sistema visual (design tokens)
+  - Estilo: neutros cálidos de baja saturación (lenguaje Notion/Claude); bordes sutiles antes
+    que sombras; mucho aire. Modo claro y oscuro REQUIRED.
+  - Implementación: tokens como variables CSS de shadcn (`--background`, `--foreground`,
+    `--primary`, `--border`, `--radius`) en `:root` y `.dark`; Tailwind extiende su theme desde
+    esas variables. Dark mode vía clase `.dark` en `<html>`, con ThemeProvider que arranca con
+    `prefers-color-scheme` y persiste la elección. CERO hex literales en componentes.
+  - Neutros claro:  fondo #FAF9F7 · superficie #FFFFFF · texto #20201E · texto-2 #6F6E69 · borde #E9E7E1
+  - Neutros oscuro: fondo #191816 · superficie #232220 · texto #ECEAE5 · texto-2 #A29F99 · borde #312E2A
+  - Primary (índigo frío, separado de los estados): #4F52C9 (claro) / #8488E6 (oscuro).
+  - Semánticos desaturados, EXCLUSIVOS de estados (éxito/advertencia/peligro/info):
+    claro #3E875A / #B07D1C / #BE4940 / #3C6FA2 · oscuro #67B083 / #D9A53F / #DE7269 / #6B97C4.
+    MUST NOT usarse un color de estado como acento decorativo.
+  - Tipografía: stack del sistema (neutral, no Inter/Roboto/Arial).
+    `font-variant-numeric: tabular-nums` REQUIRED en cifras de tablas y dashboards.
+    Mono del sistema para IDs/códigos de documento.
+  - Radios: sm 4 / md 8 / lg 12 / pill 999. Escala de espaciado base 4px (4/8/12/16/24/32/48).
+    Sombras sutiles solo en overlays/popovers; en el resto, preferir borde de 0.5–1px.
+
+  ## Infraestructura como restricción de código
+  - Cloud Run: stateless, filesystem efímero -> escribir SOLO en `/tmp`; sin estado en memoria
+    entre requests; sin threads de fondo (usar Cloud Scheduler); escuchar en `$PORT`. Los
+    reportes se generan síncronos dentro del request; si chocan con el timeout, migrar a job
+    diferido con el mismo patrón de Cloud Scheduler.
+  - Vercel: SPA build de Vite; variables expuestas al cliente SOLO con prefijo `VITE_`; NUNCA
+    secretos en el bundle; root directory apuntando al subdirectorio del frontend.
+  - Notificaciones: Resend (email; requiere dominio propio verificado SPF/DKIM/DMARC; NO Gmail/
+    Hotmail en producción) y Meta Cloud API directo (WhatsApp; sin BSP; Business Manager a
+    nombre del cliente, equipo como administrador delegado).
+
+  ## CI/CD y DevSecOps
+  - Pipeline backend (bloqueante, en orden): ruff (lint+format) -> mypy --strict -> bandit ->
+    pip-audit -> pytest + coverage -> build Docker -> Trivy -> deploy Cloud Run.
+  - Gate de cobertura: >= 80% global, >= 90% en módulos de cálculo financiero
+    (merma, costo nominal/efectivo, saldos CxC/CxP).
+  - Pipeline frontend (bloqueante): eslint -> tsc -> npm audit / Dependabot -> vitest ->
+    playwright (incluye WebKit) -> deploy Vercel.
+  - Branch `main` protegido. Todo cambio vía Pull Request con pipeline verde antes de merge.
+  - Versiones pineadas exactas en lockfiles (`uv.lock`, `package-lock.json`). Los upgrades son
+    PRs deliberados gateados por escaneo de dependencias + tests; NO se flota a la última versión.
+
+  ## Principios de calidad de código (no negociables)
+  - Clean Code: nombres descriptivos sin abreviaturas; responsabilidad única por función;
+    comentarios SOLO para el "por qué", nunca el "qué". Objetivo orientativo ~20 líneas por
+    función (guía, no gate bloqueante).
+  - DRY: toda lógica repetida MUST extraerse a utilidad, hook, servicio o componente compartido.
+    MUST NOT copiarse y pegarse lógica.
+  - SOLID como principio (SRP, OCP, LSP, ISP, DIP). En empates entre SOLID y simplicidad,
+    KISS y YAGNI GANAN (proyecto de un dev solo; evitar la sobre-abstracción).
+  - KISS: la solución más simple que cumple el requisito es la correcta.
+  - YAGNI: NO se implementa funcionalidad fuera del alcance del cambio actual.
+    Refuerza la regla "no CRUD completo por defecto".
+
+  ## Patrones arquitectónicos del backend
+  - Lógica de negocio SOLO en `services/`. Los ViewSets y serializers de DRF son delgados:
+    reciben, validan y delegan.
+  - Cálculo financiero (FIFO, costo nominal/efectivo, merma, saldos CxC/CxP) en funciones PURAS
+    sin dependencia del ORM, testeables de forma aislada. Esto habilita el gate de cobertura >=90%.
+  - Transacciones: toda operación multi-tabla se ejecuta en `transaction.atomic()`, con rollback
+    total si algo falla. Aplica a ingresos (Kardex+CxP+estado), entregas (Kardex+CxC), cobros,
+    pagos, despiece y cierre.
+  - Auditoría centralizada: decorador `@audit(action, entity)` en services; NO se repite la
+    lógica de logging. Registra fecha/hora, usuario, campo, valor anterior y valor nuevo.
+  - Soft delete: por POLÍTICA DE TRES CLASES (ver invariantes), NO global.
+  - Validación de identificación ecuatoriana en `utils/validations.py`: enruta por tipo y dígito.
+    Cédula y RUC de persona natural usan módulo 10; sociedades privadas (3er dígito = 9) y
+    sector público (3er dígito = 6) usan módulo 11; pasaporte sin checksum.
+
+  ## Invariantes del sistema (reglas de negocio inviolables)
+  - Período cerrado: antes de crear o modificar CUALQUIER documento, el sistema MUST validar que
+    su fecha no caiga en un período cerrado; si cae, se rechaza.
+  - Pesos: siempre decimales; unidad base = libras.
+  - Kardex append-only: un movimiento de Kardex NUNCA se borra ni se edita. Las correcciones
+    generan eventos de auditoría y recálculos en cascada, no borrados.
+  - FIFO: el despacho consume primero los lotes más antiguos; el sistema los selecciona
+    automáticamente. El saldo NUNCA es negativo.
+  - Doble costeo en paralelo: costo nominal (peso de factura) y costo efectivo (peso real tras
+    merma), activables de forma independiente.
+  - Cuadre al cierre de ruta: peso_ingresado = peso_entregado + merma + peso_sobrante. Si la
+    diferencia supera el rango de merma, el sistema bloquea el cierre y exige observación
+    justificada + aprobación de supervisor o jefe.
+  - Nota de crédito de proveedor: SIEMPRE vinculada a un Ingreso específico; reduce el saldo de
+    CxP de ese ingreso; NUNCA es crédito genérico.
+  - Snapshot inmutable de la entrega: al pasar a GENERADO, la entrega MUST congelar un snapshot
+    inmutable de los precios aplicados y de los datos del destinatario (cliente). Cambios
+    posteriores en el catálogo o en la ficha MUST NOT afectar entregas pasadas. Si se requiere
+    otro precio, se descarta la entrega y se crea una nueva.
+  - Soft delete (política de tres clases):
+    * Documentos con flujo de estado (ingresos, entregas, cobros, pagos, pedidos, devoluciones,
+      notas de crédito) y Kardex: inmutables / append-only. NO se borran; se reversan o anulan
+      vía estado (DESCARTADO, ANULADO, CANCELADO, reversión).
+    * Catálogos y datos maestros sin máquina de estado (listas de precios, unidades de medida,
+      categorías, gastos de ruta, ítems de detalle): soft delete con `deleted_at` + manager por
+      defecto que filtra + índices únicos parciales (WHERE deleted_at IS NULL).
+    * Fichas de Directorio: la baja se modela con el estado INACTIVO (ACTIVO -> BLOQUEADO -> INACTIVO).
+  - Acta de cierre: NO se persiste como archivo; se regenera bajo demanda desde plantilla,
+    fijando `template_version` para garantizar inmutabilidad.
+  - Contrato de errores uniforme: toda respuesta de error del backend MUST seguir el contrato
+    {campo: [mensajes]} para validación (HTTP 400), con los errores no atados a un campo en
+    `non_field_errors`, y {detail: mensaje} para el resto (401/403/404/409/5xx). Los mensajes MUST
+    estar en español; el backend MUST NOT devolver traceback, nombre de excepción, ruta de archivo,
+    SQL ni status interno. Se centraliza en un exception handler de DRF; las excepciones no
+    manejadas (5xx) registran el traceback SOLO en logs del servidor y devuelven {detail} genérico.
+    El frontend MUST mapear {campo: [mensajes]} directo a los campos del formulario y mostrar
+    {detail} como aviso limpio; MUST NOT exponer status crudo, URL, JSON ni stack en la UI.
+
+rules:
+  proposal:
+    - El alcance MUST NOT incluir refactorizaciones ajenas al dominio del cambio (YAGNI).
+    - Describir el impacto en el modelo de datos (modelos Django / tablas PostgreSQL) ANTES de mencionar componentes de UI (DIP).
+    - Todo cambio de modelo MUST incluir su migración Django (makemigrations), reversible.
+    - Verificar que el cambio NO viola ningún invariante (período cerrado, Kardex append-only, FIFO, cuadre, snapshot inmutable, nota de crédito vinculada).
+    - El criterio de aborto MUST ser una condición verificable, no subjetiva.
+
+  specs:
+    - Cada escenario MUST ser atómico y verificable de forma independiente (SRP).
+    - Los escenarios de error MUST cubrir validación de entrada (serializer DRF / 400) y respuesta del backend (contrato).
+    - MUST NOT duplicarse escenarios ya existentes en los specs base del dominio (DRY).
+    - Los escenarios de Kardex MUST verificar saldo y trazabilidad (despiece/lote) tras la operación.
+    - Los escenarios de reversión (devolución, anulación, reversión de cierre) MUST verificar la restauración de efectos en Kardex y saldos.
+
+  design:
+    - "REQUIRED: definir el diccionario de datos (serializers DRF + tipos/Zod generados del OpenAPI) ANTES de diseñar componentes de UI (DIP)."
+    - "REQUIRED: documentar cada capa (datos, API, UI) por separado; MUST NOT mezclarse (SRP)."
+    - "Endpoints derivados de los flujos de estado documentados. Las transiciones de estado son acciones explícitas, NO PUT genéricos. MUST NOT generarse CRUD completo por defecto; cada endpoint MUST justificarse con un flujo de usuario o requisito."
+    - Toda nueva abstracción MUST justificarse con al menos dos casos de uso reales (YAGNI).
+    - Los modelos Django con soft delete MUST heredar del mixin de auditoría/soft-delete (solo catálogos y datos maestros, según la política de tres clases).
+    - Toda migración Django MUST ser reversible (upgrade + downgrade).
+    - "Cero hardcoding: colores -> tokens del theme; URLs -> `.env`/constantes; límites, plazos y feature flags -> constantes centralizadas; strings repetidos -> constantes. MUST NOT embeberse valores literales."
+    - "Los componentes de dominio van en `features/`; los visuales reutilizables en `@/components/custom/`; la lógica compartida entre features en `src/shared/`. Nunca al revés (ISP/DRY)."
+    - "Las páginas en `src/pages/` son dumb pages: sin estado ni llamadas directas a la API; lo asíncrono se encapsula en custom hooks dentro de `features/` (SRP+DIP)."
+    - Definir el sistema visual (tokens de color, tipografía, radios, sombras, escala) UNA vez en `tailwind.config` y el theme de shadcn ANTES de maquetar pantallas.
+    - Todo color MUST provenir de un token del theme; NUNCA un hex literal. Los colores de estado son exclusivos de estados.
+    - Layout con flex/grid + gap; MUST NOT usarse márgenes sueltos ni whitespace inline.
+    - Toda pantalla MUST cubrir los estados vacío, carga, error y éxito (Refine provee patrones).
+    - Áreas táctiles >= 44px en móvil/tablet (uso en campo por responsables de ruta). Inputs >= 16px en iOS para evitar el zoom automático de Safari.
+    - "Herramienta densa (ERP): jerarquía clara y acción primaria evidente; la densidad es esperada. Cuerpo >= 14px; las celdas de tabla MAY bajar a 13px."
+    - Todo elemento interactivo MUST tener estados hover, active, focus y disabled. Foco visible y contraste suficiente (accesibilidad).
+    - Iconografía de una sola familia (Lucide). MUST NOT dibujarse SVG complejos a mano; usar placeholders etiquetados. Emoji solo si la marca lo usa.
+    - Copy real y específico; MUST NOT usarse Lorem ipsum ni datos inventados.
+    - Componentizar SOLO cuando algo se repite de verdad y tiene estado/props propios (KISS/YAGNI).
+    - 'Evitar "AI slop": sin gradientes agresivos, sin la tarjeta "redondeada + borde izquierdo de acento", sin stats/iconos decorativos sin información. Variedad visual intencional, no monotonía ni caos.'
+
+  tasks:
+    - "Las tareas MUST seguir el orden: Contrato (OpenAPI) -> Migraciones Django -> Backend (services) -> Frontend -> Seguridad -> Pruebas. NO se avanza de fase si la anterior tiene ítems pendientes."
+    - "REQUIRED: incluir pasos de análisis estático (ruff, mypy --strict, bandit, eslint, tsc) y de dependencias (pip-audit, npm audit/Dependabot, Trivy)."
+    - Cada tarea MUST ser completable en una sola sesión (KISS).
+    - 'MUST NOT crearse tareas genéricas tipo "refactorizar X". Cada tarea MUST nombrar el archivo o módulo exacto a modificar (Clean Code).'
+    - Cada tarea de backend que altere el modelo de datos MUST incluir su migración Django.
+    - "Definition of done: el agente MUST ejecutar localmente TODOS los gates del pipeline y dejarlos en verde antes de declarar la tarea completa. NO se delega el descubrimiento de fallos al CI."

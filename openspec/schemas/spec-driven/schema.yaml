@@ -1,0 +1,103 @@
+name: spec-driven
+version: 1
+description: Flujo de trabajo spec-driven — Sistema de gestión operativa (Django + DRF + PostgreSQL + React/Refine)
+
+artifacts:
+  - id: proposal
+    generates: proposal.md
+    template: proposal.md
+    description: Propuesta inicial de cambio fullstack
+    instruction: |
+      Crear una propuesta que justifique el cambio desde la necesidad de negocio.
+      Reglas de calidad REQUIRED:
+      - Aplicar YAGNI: el alcance solo incluye lo estrictamente necesario para resolver el problema descrito.
+      - Aplicar SRP: cada sección cubre una única responsabilidad (problema, alcance, impacto, riesgo).
+      - El impacto en el modelo de datos (modelos Django / tablas PostgreSQL) MUST describirse antes que el impacto en la UI (DIP).
+      - El criterio de aborto MUST ser una condición técnica verificable, no una apreciación subjetiva.
+      - Los colores hardcodeados y las credenciales en el código MUST NOT incluirse.
+      - Todo cambio en modelos MUST contemplar su migración Django (makemigrations), reversible.
+      - Verificar que el cambio no viola los invariantes del sistema (período cerrado, Kardex append-only,
+        FIFO, doble costeo, cuadre de ruta, nota de crédito vinculada, snapshot inmutable de entrega).
+    requires: []
+
+  - id: specs
+    generates: specs/**/*.md
+    template: specs.md
+    description: |
+      Especificaciones funcionales BDD (contrato de interacción).
+
+      Sistema de doble capa:
+      - `changes/{change}/specs/{domain}/spec.md` — delta específico del cambio (lo que este cambio
+        AÑADE, MODIFICA o ELIMINA respecto al estado anterior del dominio).
+      - `specs/{domain}/spec.md` — spec global consolidada del dominio (acumula todos los deltas
+        de todas las fases; es la fuente de verdad viva del comportamiento esperado).
+
+      Al crear o archivar un cambio, el delta del cambio MUST reflejarse en la spec global.
+      Dominios válidos: base, auth, usuarios, directorio, productos, kardex, ingresos, rutas,
+      pedidos, entregas, devoluciones, cobros, pagos, notificaciones, reportes, cierre, merma, trazabilidad.
+    instruction: |
+      Definir los comportamientos esperados del sistema mediante escenarios BDD.
+      Reglas de calidad REQUIRED:
+      - Aplicar SRP: cada escenario valida exactamente UNA condición. Sin escenarios combinados.
+      - Aplicar DRY: verificar los specs base del dominio; no duplicar escenarios que ya existan.
+      - Los escenarios de éxito y de error son REQUIRED para cada requisito.
+      - Los escenarios de error MUST especificar el código HTTP (400, 401, 403, 404, 409) y el feedback visual.
+      - Nombrar escenarios de forma descriptiva usando el patrón: "[Actor] [acción] [condición]".
+      - Los escenarios que modifican Kardex MUST verificar saldo y trazabilidad (despiece/lote) post-operación.
+      - Los escenarios de reversión (devolución, anulación, reversión de cierre) MUST verificar la
+        restauración de efectos en Kardex y saldos.
+      - Todo escenario que cree o modifique un documento con fecha MUST validar el rechazo si el
+        período está cerrado.
+    requires: [proposal]
+
+  - id: design
+    generates: design.md
+    template: design.md
+    description: Diseño técnico de Datos, API y Componentes UI
+    instruction: |
+      Diseñar la solución fullstack en capas separadas y explícitas.
+      Reglas de calidad REQUIRED:
+      - Aplicar DIP: diseñar la Capa de Datos primero. Las capas superiores dependen de las
+        abstracciones definidas aquí, nunca al revés.
+      - Aplicar SRP: cada sección (Datos, API, UI) MUST documentarse de forma independiente.
+        Las responsabilidades entre secciones MUST NOT mezclarse.
+      - Aplicar DRY: toda lógica compartida entre features MUST ubicarse en `src/shared/`.
+      - Aplicar ISP: componentes de dominio en `features/`; componentes visuales reutilizables
+        en `@/components/custom/`. Nunca mezclar.
+      - Aplicar YAGNI: justificar toda abstracción nueva con al menos dos casos de uso concretos.
+      - Aplicar KISS: preferir la solución más simple que cumpla el contrato definido en los specs.
+      - El Diccionario de Datos MUST completarse antes de diseñar cualquier componente de UI.
+      - Los modelos Django de catálogo y datos maestros MUST heredar del mixin de soft-delete
+        (política de 3 clases). Los documentos con flujo de estado y el Kardex son append-only:
+        MUST NOT usar soft delete; se reversan/anulan vía estado.
+      - Los endpoints se derivan de los flujos de estado documentados; las transiciones de estado
+        son acciones explícitas. NO DEBE diseñarse CRUD completo por defecto.
+      - El cálculo financiero (FIFO, costo nominal/efectivo, merma, saldos) MUST vivir en funciones
+        puras sin dependencia del ORM, testeables de forma aislada.
+      - Toda migración Django MUST ser reversible.
+    requires: [proposal]
+
+  - id: tasks
+    generates: tasks.md
+    template: tasks.md
+    description: Plan de implementación sincronizado Backend + Frontend
+    instruction: |
+      Generar un checklist de tareas ordenadas y verificables.
+      Reglas de calidad REQUIRED:
+      - El orden de fases es REQUIRED: Contrato (OpenAPI) -> Migraciones Django -> Backend (services)
+        -> Frontend -> Seguridad -> Pruebas. No se pasa a la siguiente fase hasta completar la anterior.
+      - Aplicar SRP: cada tarea MUST referenciar el archivo o módulo exacto a modificar.
+        Las tareas genéricas como "refactorizar el módulo de auth" MUST NOT crearse.
+      - Aplicar DRY: si una tarea de Backend y Frontend comparten un paso idéntico, extraerlo a una
+        tarea global compartida (Fase 0 o equivalente).
+      - Aplicar KISS: cada tarea MUST ser completable en una única sesión de trabajo.
+      - Cada tarea de Backend incluye: Serializer DRF -> Modelo Django -> Migración -> Servicio -> ViewSet/URL -> Prueba.
+      - Cada tarea de Frontend incluye: tipos Zod (generados del OpenAPI) -> Hook (Refine) -> Componente -> Prueba.
+      - Las tareas de seguridad (Fase 5) son no negociables y MUST NOT eliminarse.
+      - Definition of done: el agente MUST ejecutar localmente TODOS los gates del pipeline y dejarlos
+        en verde antes de declarar la tarea completa.
+    requires: [specs, design]
+
+apply:
+  requires: [tasks]
+  tracks: tasks.md
