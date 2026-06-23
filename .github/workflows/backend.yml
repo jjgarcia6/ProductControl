@@ -1,0 +1,96 @@
+name: backend
+
+# Path-triggered: solo corre si cambió backend/.
+on:
+  push:
+    branches: [main]
+    paths: ['backend/**', '.github/workflows/backend.yml']
+  pull_request:
+    paths: ['backend/**', '.github/workflows/backend.yml']
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    # working-directory: backend SOLO en este job (los gates de calidad corren ahí).
+    # No se pone a nivel de workflow porque contaminaría los `run` internos de
+    # acciones de terceros (p. ej. trivy) en los jobs image/deploy.
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Sincronizar dependencias
+        run: uv sync --frozen
+
+      # Etapas bloqueantes, en orden (§7.1).
+      - name: Lint — ruff
+        run: uv run ruff check .
+
+      - name: Formato — ruff
+        run: uv run ruff format --check .
+
+      - name: Type-check — mypy (strict)
+        run: uv run mypy .
+
+      - name: SAST — bandit
+        run: uv run bandit -c pyproject.toml -r apps config
+
+      - name: Escaneo de secretos — gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Escaneo de dependencias — pip-audit
+        run: uv run pip-audit
+
+      - name: Tests + cobertura — pytest (>=80% global)
+        run: uv run pytest
+
+      - name: Generar OpenAPI (insumo del codegen del frontend)
+        run: uv run python manage.py spectacular --file schema.yml
+
+  image:
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build de imagen — docker
+        # Job sin working-directory: el contexto del build es backend/.
+        run: docker build -t backend:${{ github.sha }} backend
+
+      - name: Escaneo de imagen — trivy
+        # Imagen oficial pineada vía docker run: determinista y sin la frágil
+        # instalación de binario de trivy-action. Escanea la imagen local por el socket.
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:0.65.0 image \
+            --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress \
+            backend:${{ github.sha }}
+
+  deploy:
+    needs: image
+    runs-on: ubuntu-latest
+    # Deploy SOLO en main y cuando esté habilitado (requiere secretos de GCP).
+    if: github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Autenticación GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Deploy — Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ vars.CLOUD_RUN_SERVICE }}
+          region: ${{ vars.CLOUD_RUN_REGION }}
+          source: backend

@@ -1,0 +1,41 @@
+# === Secretos / entorno (NUNCA en el repo) ===
+.env
+.env.*
+!.env.example
+
+# === Backend (Python / Django) ===
+.venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+backend/staticfiles/
+# OpenAPI generado por spectacular (regenerable; el frontend lo consume vía npm run codegen)
+backend/schema.yml
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# === Frontend (Node) ===
+node_modules/
+dist/
+*.local
+.vite/
+playwright-report/
+test-results/
+.playwright/
+
+# === Credenciales / claves ===
+*.pem
+*-key.json
+gcp-*.json
+
+# === SO / editor ===
+.DS_Store
+Thumbs.db
+
+# === Claude Code (local) ===
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
