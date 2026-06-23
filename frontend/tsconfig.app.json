@@ -15,8 +15,8 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Path alias @ -> src (convención feature-driven del config.yaml) */
-    "baseUrl": ".",
+    /* Path alias @ -> src (convención feature-driven del config.yaml).
+       Con moduleResolution "bundler", paths NO requiere baseUrl (deprecado en TS6, fuera en TS7). */
     "paths": {
       "@/*": ["./src/*"]
     },

@@ -1,6 +1,7 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+/* Tailwind 4: se conserva el theme/darkMode definido en JS (tokens desde variables CSS). */
+@config '../tailwind.config.js';
 
 /*
   Design tokens (config.yaml — sistema visual). Variables CSS de shadcn en :root y .dark.
