@@ -47,7 +47,7 @@ uv run pytest          # cobertura >=80% global
 
 ## Arranque local — Frontend
 
-Requiere Node 20.19+.
+Requiere Node 24+ (Node 20 está EOL; CI corre sobre Node 24).
 
 ```bash
 cd frontend
@@ -87,9 +87,25 @@ El runbook (§0) pide documentar cualquier desviación y su motivo:
 2. **Django fijado a la serie 5.2 LTS.** El resolutor de `uv` ofrecía Django 6.0 (no LTS).
    La decisión cerrada (§1 / config.yaml) es **5.2 LTS**, así que se acotó a `>=5.2,<5.3`.
 
-3. **TypeScript fijado a 5.x y Tailwind a 3.x.** El scaffold de Vite traía TS 6.0 y Tailwind
-   sería v4; las decisiones cerradas (§1) son **TS 5.x** y **Tailwind 3.x**. Se fijaron a esas
-   series (TS `~5.9`, Tailwind `^3.4`), verificando que compilan con Vite 8.
+3. **TypeScript 6.x y Tailwind 4.x (actualización de stack, 2026-06-23).** Las decisiones
+   cerradas originales (§1) eran TS 5.x y Tailwind 3.x; se subieron a sus últimas estables —
+   **TypeScript `~6.0` (6.0.3)** y **Tailwind `^4.3.1`** — y el runbook se actualizó en
+   consecuencia. Detalle de la migración de Tailwind 3 → 4:
+   - Se eliminaron `postcss` y `autoprefixer` y el archivo `postcss.config.js`; Tailwind 4 trae
+     autoprefixing y nesting integrados (Lightning CSS).
+   - Se añadió el plugin oficial **`@tailwindcss/vite`** (registrado en `vite.config.ts`), que
+     reemplaza al plugin de PostCSS.
+   - En `src/index.css` las tres directivas `@tailwind` se reemplazaron por `@import "tailwindcss";`.
+     El theme y `darkMode: 'class'` se conservan en `tailwind.config.js`, referenciado desde el
+     CSS con `@config '../tailwind.config.js';` (cero cambios en los design tokens).
+   - Para TS 6: se quitó `baseUrl` de `tsconfig.app.json` (deprecado en TS6, eliminado en TS7);
+     con `moduleResolution: "bundler"` el alias `@/*` sigue funcionando solo con `paths`.
+   - Verificado en verde: `typecheck`, `build`, `lint` y `vitest`.
+
+7. **Override de `typescript` para `openapi-typescript`.** `openapi-typescript@7.13.0` aún
+   declara su peer como `typescript ^5.x` y bloquearía el install con TS 6. Se añadió
+   `overrides.openapi-typescript.typescript = "$typescript"` para que use la misma versión raíz
+   (6.0.3). El CLI emite los tipos igual; revisar cuando publique soporte formal a TS 6.
 
 4. **ESLint en vez del `oxlint` del scaffold.** El runbook (§5.7) y la CI (§7.2) exigen
    `eslint` como linter bloqueante; se reemplazó `oxlint` por `eslint` (flat config).

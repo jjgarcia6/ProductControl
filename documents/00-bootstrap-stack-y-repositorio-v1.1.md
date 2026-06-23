@@ -7,6 +7,8 @@
 
 > **Cambios respecto a v1.0:** incorporación del **contrato de errores uniforme** (sección 6) — exception handler de DRF en backend y manejo de errores sin ruido en frontend — más sus guardrails y verificaciones. Renumeración de las secciones posteriores. Este runbook es la versión completa para recrear el proyecto desde cero; si ya ejecutaste la v1.0, aplica solo el adendum `00b-adendum-contrato-de-errores.md`.
 
+> **Actualización de stack (2026-06-23):** se subieron dos decisiones cerradas a sus últimas versiones estables — **Tailwind CSS 3.x → 4.x** (≥ 4.3.1, motor CSS-first + `@tailwindcss/vite`, sin PostCSS/autoprefixer) y **TypeScript 5.x → 6.x** (≥ 6.0.3). El resto del stack frontend ya estaba al día. Detalle de la migración y su impacto en la sección "Desviaciones del stack" del `README.md` raíz.
+
 ---
 
 ## 0. Cómo usar este documento
@@ -34,12 +36,12 @@ Reglas para el agente:
 | API | **DRF 3.15+** | |
 | Auth | **djangorestframework-simplejwt 5.x** | **Fijo. No usar Supabase Auth** |
 | OpenAPI | **drf-spectacular** | El schema del backend es la fuente de tipos |
-| Node | **20.19+** | Requerido por OpenSpec y por el tooling frontend |
+| Node | **24+** | Node 20 está EOL; requerido por OpenSpec, el tooling frontend y GitHub Actions |
 | Framework frontend | **React 19** | (Reemplaza a React 18 del stack v2.3) |
 | Build | **Vite 5+** | |
 | Meta-framework | **Refine v5** | (Reemplaza a Refine 4 del stack v2.3) |
-| UI | **Shadcn/UI + Tailwind 3.x** | |
-| Tipos/validación | **TypeScript 5.x (strict) + Zod** | Zod **generado** desde OpenAPI, nunca a mano |
+| UI | **Shadcn/UI + Tailwind 4.x** | Tailwind 4 (≥ 4.3.1): motor CSS-first, plugin `@tailwindcss/vite` (sin PostCSS/autoprefixer) |
+| Tipos/validación | **TypeScript 6.x (strict) + Zod** | TypeScript ≥ 6.0.3. Zod **generado** desde OpenAPI, nunca a mano |
 | Estado servidor | **React Query dentro de Refine** | Sin TanStack en paralelo |
 | Estado UI/sesión | **Zustand** | Solo UI/sesión, no datos de servidor |
 | Base de datos | **PostgreSQL vía Supabase** | **Solo base de datos**: sin Auth/Realtime/Storage |
@@ -55,7 +57,7 @@ Verifica que existan (instala lo que falte):
 
 ```bash
 python3 --version    # >= 3.12
-node --version       # >= 24.14
+node --version       # >= 24
 git --version
 uv --version         # si falta: curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
@@ -210,10 +212,13 @@ npm install
 # Refine (core + integración REST) y router
 npm install @refinedev/core @refinedev/react-router @refinedev/simple-rest react-router
 
-# UI: Tailwind + Shadcn
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
-# Shadcn: inicializar según su CLI vigente (componentes accesibles sobre Tailwind)
+# UI: Tailwind 4 + Shadcn
+npm install -D tailwindcss @tailwindcss/vite
+# Tailwind 4 NO usa PostCSS/autoprefixer ni `tailwindcss init -p`:
+#   - registra el plugin `@tailwindcss/vite` en vite.config.ts,
+#   - en src/index.css usa `@import "tailwindcss";` (en vez de las 3 directivas @tailwind),
+#   - el autoprefixing/nesting va integrado vía Lightning CSS.
+# Shadcn: inicializar según su CLI vigente (componentes accesibles sobre Tailwind 4)
 
 # Validación y estado UI
 npm install zod zustand
