@@ -60,7 +60,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build de imagen — docker
-        run: docker build -t backend:${{ github.sha }} backend
+        # working-directory ya es backend/ (default del workflow); el contexto es ".".
+        run: docker build -t backend:${{ github.sha }} .
 
       - name: Escaneo de imagen — trivy
         uses: aquasecurity/trivy-action@v0.33.1
