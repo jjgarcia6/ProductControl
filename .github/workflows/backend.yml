@@ -66,12 +66,14 @@ jobs:
         run: docker build -t backend:${{ github.sha }} backend
 
       - name: Escaneo de imagen — trivy
-        uses: aquasecurity/trivy-action@v0.33.1
-        with:
-          image-ref: backend:${{ github.sha }}
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: '1'
+        # Imagen oficial pineada vía docker run: determinista y sin la frágil
+        # instalación de binario de trivy-action. Escanea la imagen local por el socket.
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:0.65.0 image \
+            --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress \
+            backend:${{ github.sha }}
 
   deploy:
     needs: image
