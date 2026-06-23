@@ -8,13 +8,15 @@ on:
   pull_request:
     paths: ['backend/**', '.github/workflows/backend.yml']
 
-defaults:
-  run:
-    working-directory: backend
-
 jobs:
   quality:
     runs-on: ubuntu-latest
+    # working-directory: backend SOLO en este job (los gates de calidad corren ahí).
+    # No se pone a nivel de workflow porque contaminaría los `run` internos de
+    # acciones de terceros (p. ej. trivy) en los jobs image/deploy.
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
         with:
@@ -60,8 +62,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build de imagen — docker
-        # working-directory ya es backend/ (default del workflow); el contexto es ".".
-        run: docker build -t backend:${{ github.sha }} .
+        # Job sin working-directory: el contexto del build es backend/.
+        run: docker build -t backend:${{ github.sha }} backend
 
       - name: Escaneo de imagen — trivy
         uses: aquasecurity/trivy-action@v0.33.1
