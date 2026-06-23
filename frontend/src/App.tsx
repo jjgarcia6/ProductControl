@@ -21,7 +21,11 @@ function App() {
           dataProvider={dataProvider}
           routerProvider={routerProvider}
           notificationProvider={notificationProvider}
-          options={{ syncWithLocation: true, warnWhenUnsavedChanges: true }}
+          options={{
+            syncWithLocation: true,
+            warnWhenUnsavedChanges: true,
+            disableTelemetry: true,
+          }}
         >
           <Routes>
             <Route index element={<HomePage />} />
