@@ -27,12 +27,51 @@ const UserIdentity = z
     role: RoleEnum,
     is_active: z.boolean(),
     profile: ProfileRead.nullable(),
+    must_change_password: z.boolean(),
   })
   .passthrough();
 const TokenResponse = z
   .object({ access: z.string(), user: UserIdentity })
   .passthrough();
 const AccessToken = z.object({ access: z.string() }).passthrough();
+const UserAdminRead = z
+  .object({
+    id: z.number().int(),
+    username: z.string(),
+    first_name: z.string(),
+    last_name: z.string(),
+    role: RoleEnum,
+    is_active: z.boolean(),
+    profile: ProfileRead.nullable(),
+    must_change_password: z.boolean(),
+  })
+  .passthrough();
+const UserAdminWrite = z
+  .object({
+    username: z
+      .string()
+      .max(150)
+      .regex(/^[\w.@+-]+$/),
+    password: z.string(),
+    profile_id: z.string().uuid(),
+    first_name: z.string().max(150).optional(),
+    last_name: z.string().max(150).optional(),
+  })
+  .passthrough();
+const PatchedUserAdminUpdate = z
+  .object({ first_name: z.string().max(150), last_name: z.string().max(150) })
+  .partial()
+  .passthrough();
+const ResetPasswordWrite = z
+  .object({
+    temporary_password: z.string(),
+    generate: z.boolean().default(false),
+  })
+  .partial()
+  .passthrough();
+const ResetPasswordRead = z
+  .object({ temporary_password: z.string() })
+  .passthrough();
 const ProfileWrite = z
   .object({
     name: z.string().max(100),
@@ -41,6 +80,15 @@ const ProfileWrite = z
     visible_sensitive_fields: z.array(z.string()).optional(),
     auto_approval: z.boolean().optional(),
   })
+  .passthrough();
+const PatchedProfileAdminWrite = z
+  .object({
+    description: z.string().max(255),
+    permissions: z.record(z.string(), z.array(z.string())),
+    visible_sensitive_fields: z.array(z.string()),
+    auto_approval: z.boolean(),
+  })
+  .partial()
   .passthrough();
 const AssignProfile = z.object({ profile_id: z.string().uuid() }).passthrough();
 
@@ -53,6 +101,12 @@ export const schemas = {
   UserIdentity,
   TokenResponse,
   AccessToken,
+  UserAdminRead,
+  UserAdminWrite,
+  PatchedUserAdminUpdate,
+  ResetPasswordWrite,
+  ResetPasswordRead,
   ProfileWrite,
+  PatchedProfileAdminWrite,
   AssignProfile,
 };

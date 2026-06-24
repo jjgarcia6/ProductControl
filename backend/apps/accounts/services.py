@@ -11,6 +11,8 @@ DELEGA en él en lugar de reimplementar la invalidación por usuario (DRY).
 
 from __future__ import annotations
 
+import secrets
+import string
 from datetime import timedelta
 from typing import Any, cast
 
@@ -25,6 +27,10 @@ from rest_framework_simplejwt.token_blacklist.models import (
     OutstandingToken,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from apps.authz.catalog import role_for_profile_name
+from apps.authz.models import Profile
+from apps.common.audit import audit
 
 from .models import User
 
@@ -114,5 +120,96 @@ def change_own_password(user: User, current_password: str, new_password: str) ->
         )
     with transaction.atomic():
         user.set_password(new_password)
-        user.save(update_fields=["password"])
+        # F3: un cambio propio exitoso satisface la obligación del reset administrativo.
+        user.must_change_password = False
+        user.save(update_fields=["password", "must_change_password"])
         revoke_all_refresh(user)
+
+
+# --- Administración de usuarios (F3 user-management) --------------------------
+
+
+def _sync_role_to_profile(target: User, profile: Profile) -> None:
+    """Sincroniza el `role` nominal con el perfil semilla; los perfiles a medida no lo tocan."""
+    role = role_for_profile_name(profile.name)
+    if role is not None:
+        target.role = role
+
+
+def generate_temporary_password() -> str:
+    """Genera una contraseña temporal robusta (cumple la política de Django)."""
+    alphabet = string.ascii_letters + string.digits
+    # 14 caracteres con al menos una minúscula, una mayúscula y un dígito.
+    while True:
+        candidate = "".join(secrets.choice(alphabet) for _ in range(14))
+        if (
+            any(c.islower() for c in candidate)
+            and any(c.isupper() for c in candidate)
+            and any(c.isdigit() for c in candidate)
+        ):
+            return candidate
+
+
+@audit(action="CREATE", entity="User")
+def create_user(
+    *,
+    user: User,
+    username: str,
+    password: str,
+    profile: Profile,
+    first_name: str = "",
+    last_name: str = "",
+) -> User:
+    """Crea un usuario con su perfil y el `role` sincronizado. `user` es el actor (auditoría)."""
+    with transaction.atomic():
+        target = User(
+            username=username, first_name=first_name, last_name=last_name, profile=profile
+        )
+        _sync_role_to_profile(target, profile)
+        target.set_password(password)
+        target.save()
+    return target
+
+
+@audit(action="UPDATE", entity="User")
+def update_user(*, user: User, target: User, first_name: str, last_name: str) -> User:
+    """Edita los datos básicos del usuario. `user` es el actor (auditoría)."""
+    with transaction.atomic():
+        target.first_name = first_name
+        target.last_name = last_name
+        target.save(update_fields=["first_name", "last_name"])
+    return target
+
+
+@audit(action="UPDATE", entity="User")
+def reset_password(*, user: User, target: User, raw_password: str) -> User:
+    """Fija la contraseña temporal, activa el flag de cambio forzado e invalida sesiones.
+
+    La contraseña (dada por el admin o generada) ya viene resuelta. Devuelve el usuario
+    afectado para que la auditoría lo atribuya; el actor va en `user`.
+    """
+    with transaction.atomic():
+        target.set_password(raw_password)
+        target.must_change_password = True
+        target.save(update_fields=["password", "must_change_password"])
+        revoke_all_refresh(target)
+    return target
+
+
+@audit(action="UPDATE", entity="User")
+def deactivate_user(*, user: User, target: User) -> User:
+    """Desactiva al usuario e invalida todos sus refresh. `user` es el actor (auditoría)."""
+    with transaction.atomic():
+        target.is_active = False
+        target.save(update_fields=["is_active"])
+        revoke_all_refresh(target)
+    return target
+
+
+@audit(action="UPDATE", entity="User")
+def reactivate_user(*, user: User, target: User) -> User:
+    """Reactiva al usuario. `user` es el actor (auditoría)."""
+    with transaction.atomic():
+        target.is_active = True
+        target.save(update_fields=["is_active"])
+    return target

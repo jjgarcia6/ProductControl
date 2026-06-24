@@ -7,12 +7,15 @@ asignación y el seed tocan la BD y van en `transaction.atomic()`.
 
 from __future__ import annotations
 
+from typing import Any
+
 from django.db import transaction
 
 from apps.accounts.models import User
 from apps.common.audit import audit
+from apps.common.exceptions import Conflict
 
-from .catalog import SYSTEM_PROFILES
+from .catalog import SYSTEM_PROFILES, role_for_profile_name
 from .models import Profile
 
 
@@ -33,11 +36,52 @@ def visible_fields_for(profile: Profile | None) -> set[str]:
 
 @audit(action="UPDATE", entity="User")
 def assign_profile(*, user: User, target: User, profile: Profile) -> User:
-    """Asigna `profile` a `target`. `user` es el actor (lo atribuye la auditoría)."""
+    """Asigna `profile` a `target`, sincroniza el `role` nominal e invalida las sesiones.
+
+    F3 extiende la asignación de F2: además de fijar el perfil, sincroniza el `role` con el
+    perfil semilla (los perfiles a medida no lo tocan) y blacklistea los refresh vigentes
+    para que los permisos nuevos surtan efecto sin esperar a la expiración del token.
+    `user` es el actor (lo atribuye la auditoría).
+    """
+    # Import local: rompe cualquier ciclo de carga accounts.services <-> authz.services.
+    from apps.accounts.services import revoke_all_refresh
+
     with transaction.atomic():
         target.profile = profile
-        target.save(update_fields=["profile"])
+        fields = ["profile"]
+        role = role_for_profile_name(profile.name)
+        if role is not None:
+            target.role = role
+            fields.append("role")
+        target.save(update_fields=fields)
+        revoke_all_refresh(target)
     return target
+
+
+@audit(action="UPDATE", entity="Profile")
+def update_profile_permissions(*, user: User, profile: Profile, data: dict[str, Any]) -> Profile:
+    """Aplica los cambios validados de un perfil (permisos, campos visibles, descripción, flags)."""
+    with transaction.atomic():
+        for field, value in data.items():
+            setattr(profile, field, value)
+        profile.save()
+    return profile
+
+
+@audit(action="SOFT_DELETE", entity="Profile")
+def deactivate_profile(*, user: User, profile: Profile) -> Profile:
+    """Da de baja (soft delete clase 2) un perfil sin usuarios asignados.
+
+    Un perfil con al menos un usuario asignado MUST NOT poder darse de baja: 409 Conflict.
+    """
+    if profile.users.exists():
+        raise Conflict(
+            "No se puede dar de baja un perfil con usuarios asignados. "
+            "Reasigne esos usuarios a otro perfil primero."
+        )
+    with transaction.atomic():
+        profile.delete()  # soft delete: marca deleted_at, no elimina la fila
+    return profile
 
 
 def seed_system_profiles() -> None:
