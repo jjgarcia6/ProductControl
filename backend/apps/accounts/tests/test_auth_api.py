@@ -34,9 +34,7 @@ def client():
 
 
 def _login(client, username="operador", password=PASSWORD):
-    return client.post(
-        "/auth/login", {"username": username, "password": password}, format="json"
-    )
+    return client.post("/auth/login", {"username": username, "password": password}, format="json")
 
 
 # --- Autenticación por credenciales -----------------------------------------

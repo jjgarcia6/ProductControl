@@ -32,8 +32,7 @@ class User(AbstractUser):
         default=Role.USUARIO,
         db_index=True,
         help_text=(
-            "Rol del sistema. La autorización fina por rol se define en "
-            "access-control (F2)."
+            "Rol del sistema. La autorización fina por rol se define en access-control (F2)."
         ),
     )
 

@@ -60,9 +60,7 @@ class LoginView(_UnauthenticatedAPIView):
     )
     def post(self, request: Request) -> Response:
         if getattr(request, "limited", False):
-            raise Throttled(
-                detail="Demasiados intentos de inicio de sesión. Intente más tarde."
-            )
+            raise Throttled(detail="Demasiados intentos de inicio de sesión. Intente más tarde.")
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = authenticate(
@@ -118,9 +116,7 @@ class MeView(APIView):
 
     @extend_schema(responses={200: UserIdentitySerializer, 401: DetailSerializer})
     def get(self, request: Request) -> Response:
-        return Response(
-            UserIdentitySerializer(cast(User, request.user)).data, status=200
-        )
+        return Response(UserIdentitySerializer(cast(User, request.user)).data, status=200)
 
 
 class ChangePasswordView(APIView):
@@ -133,15 +129,11 @@ class ChangePasswordView(APIView):
         responses={200: DetailSerializer, 400: DetailSerializer, 401: DetailSerializer},
     )
     def post(self, request: Request) -> Response:
-        serializer = ChangePasswordSerializer(
-            data=request.data, context={"request": request}
-        )
+        serializer = ChangePasswordSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         services.change_own_password(
             cast(User, request.user),
             serializer.validated_data["current_password"],
             serializer.validated_data["new_password"],
         )
-        return Response(
-            {"detail": "Contraseña actualizada. Vuelva a iniciar sesión."}, status=200
-        )
+        return Response({"detail": "Contraseña actualizada. Vuelva a iniciar sesión."}, status=200)
