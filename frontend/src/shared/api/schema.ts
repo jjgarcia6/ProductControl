@@ -89,6 +89,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/authz/profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET /authz/profiles` (lectura) y `POST /authz/profiles` (creación). */
+        get: operations["authz_profiles_list"];
+        put?: never;
+        /** @description `GET /authz/profiles` (lectura) y `POST /authz/profiles` (creación). */
+        post: operations["authz_profiles_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/authz/profiles/{profile_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET /authz/profiles/{id}` — un perfil por id. */
+        get: operations["authz_profiles_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/authz/users/{user_id}/assign-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description `POST /authz/users/{id}/assign-profile` — asigna un perfil a un usuario. */
+        post: operations["authz_users_assign_profile_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -97,6 +149,14 @@ export interface components {
         AccessToken: {
             /** @description Nuevo access JWT (vida 15 min). */
             readonly access: string;
+        };
+        /** @description Entrada del endpoint de asignación perfil↔usuario. */
+        AssignProfile: {
+            /**
+             * Format: uuid
+             * @description Perfil activo a asignar al usuario.
+             */
+            profile_id: string;
         };
         /** @description Cambio de la contraseña propia: actual + nueva (valida política de Django). */
         ChangePassword: {
@@ -117,6 +177,38 @@ export interface components {
             /** @description Contraseña del usuario. */
             password: string;
         };
+        /** @description Contrato de lectura de un perfil. */
+        ProfileRead: {
+            /** Format: uuid */
+            readonly id: string;
+            /** @description Nombre único del perfil. */
+            readonly name: string;
+            /** @description Descripción opcional del perfil. */
+            readonly description: string;
+            /** @description Permisos por módulo: {módulo: [acción, ...]}. */
+            permissions: {
+                [key: string]: string[];
+            };
+            /** @description Campos sensibles visibles ('recurso.campo'). */
+            visible_sensitive_fields: string[];
+            /** @description Capacidad de auto-aprobación (estructural en F2). */
+            readonly auto_approval: boolean;
+        };
+        /** @description Entrada de creación de un perfil: valida unicidad y catálogo. */
+        ProfileWrite: {
+            /** @description Nombre único del perfil. */
+            name: string;
+            /** @description Descripción opcional del perfil. */
+            description?: string;
+            /** @description Permisos por módulo: {módulo: [acción, ...]} del catálogo. */
+            permissions?: {
+                [key: string]: string[];
+            };
+            /** @description Campos sensibles visibles ('recurso.campo') del registro. */
+            visible_sensitive_fields?: string[];
+            /** @description Capacidad de auto-aprobación (estructural en F2). */
+            auto_approval?: boolean;
+        };
         /**
          * @description * `JEFE` - Jefe
          *     * `SUPERVISOR` - Supervisor
@@ -135,7 +227,12 @@ export interface components {
             readonly access: string;
             readonly user: components["schemas"]["UserIdentity"];
         };
-        /** @description Identidad del usuario autenticado (respuesta de `login` y de `me`). */
+        /**
+         * @description Identidad del usuario autenticado (respuesta de `login` y de `me`).
+         *
+         *     F2 añade `profile` (perfil de permisos, fuente de verdad de la autorización). El
+         *     frontend lo usa para el gating; puede ser `null` mientras un usuario no tenga perfil.
+         */
         UserIdentity: {
             readonly id: number;
             /**
@@ -161,6 +258,7 @@ export interface components {
              * @description Indica si el usuario debe ser tratado como activo. Desmarque esta opción en lugar de borrar la cuenta.
              */
             readonly is_active: boolean;
+            readonly profile: components["schemas"]["ProfileRead"] | null;
         };
     };
     responses: never;
@@ -309,6 +407,162 @@ export interface operations {
                 };
             };
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    authz_profiles_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileRead"][];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    authz_profiles_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["ProfileWrite"];
+                "multipart/form-data": components["schemas"]["ProfileWrite"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    authz_profiles_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    authz_users_assign_profile_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignProfile"];
+                "application/x-www-form-urlencoded": components["schemas"]["AssignProfile"];
+                "multipart/form-data": components["schemas"]["AssignProfile"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserIdentity"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

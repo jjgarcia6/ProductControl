@@ -81,6 +81,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.common",
     "apps.accounts",
+    "apps.authz",
 ]
 
 # Modelo de usuario propio (accounts.User extiende AbstractUser con `role`).

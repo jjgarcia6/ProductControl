@@ -35,6 +35,18 @@ class User(AbstractUser):
             "Rol del sistema. La autorización fina por rol se define en access-control (F2)."
         ),
     )
+    # F2 (access-control): el perfil es la FUENTE DE VERDAD de la autorización; el `role`
+    # queda como clasificación nominal. Nullable en BD para no romper filas existentes; el
+    # seed/backfill de F2 asigna a cada usuario su perfil homónimo. PROTECT: un perfil en
+    # uso no puede borrarse.
+    profile = models.ForeignKey(
+        "authz.Profile",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="users",
+        help_text="Perfil que gobierna la autorización del usuario (no el role).",
+    )
 
     class Meta:
         db_table = "accounts_user"

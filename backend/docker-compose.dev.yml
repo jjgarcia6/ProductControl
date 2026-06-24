@@ -1,0 +1,34 @@
+# Postgres local SOLO para desarrollo y tests. NO es la base real del proyecto:
+# esa es Supabase (PostgreSQL), configurada con DATABASE_URL en backend/.env.
+#
+# Este contenedor existe porque correr `pytest` contra Supabase no es viable (pytest-django
+# crea/borra una base de test y el usuario del pooler no tiene CREATEDB). Aquí, el superusuario
+# `postgres` sí puede, y el motor (PostgreSQL 17) iguala al de producción.
+#
+# Uso:
+#   docker compose -f docker-compose.dev.yml up -d
+#   DATABASE_URL=postgresql://postgres:postgres@localhost:5433/postgres uv run pytest
+#
+# load_dotenv usa override=False, así que el DATABASE_URL exportado en el shell tiene
+# prioridad sobre el de .env (Supabase) — los tests usan este Postgres local sin tocar .env.
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: pc-postgres-test
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - pc_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pc_pg_data:

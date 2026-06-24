@@ -7,6 +7,9 @@ import type { UserIdentity } from '../types/auth.types'
   localStorage/sessionStorage (mitiga XSS robando el token). Al recargar la página el
   access se pierde y se repone con el refresh silencioso (cookie httpOnly) desde el
   authProvider.check. El refresh token NUNCA toca este store: vive en la cookie httpOnly.
+
+  F2 (access-control): el `profile` del usuario viaja DENTRO de `user` (UserIdentity ya lo
+  incluye); no se duplica como estado aparte (DRY). El gating lo lee vía `usePermissions`.
 */
 interface SessionState {
   accessToken: string | null
