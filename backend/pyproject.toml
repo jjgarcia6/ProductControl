@@ -61,6 +61,11 @@ module = "*.tests.*"
 disallow_untyped_defs = false
 disallow_untyped_calls = false
 
+# django-ratelimit no publica stubs ni marcador py.typed.
+[[tool.mypy.overrides]]
+module = "django_ratelimit.*"
+ignore_missing_imports = true
+
 [tool.django-stubs]
 django_settings_module = "config.settings.dev"
 
