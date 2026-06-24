@@ -5,7 +5,7 @@ Las rutas de negocio (auth, directorio, kardex, etc.) viven en sus changes.
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
@@ -13,6 +13,8 @@ from drf_spectacular.views import (
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # Auth (F1): el prefijo /auth coincide con el Path de la cookie de refresh.
+    path("auth/", include("apps.accounts.urls")),
     # OpenAPI: el schema es la fuente de tipos del frontend.
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

@@ -3,10 +3,166 @@
  * Do not make direct changes to the file.
  */
 
-export type paths = Record<string, never>;
+export interface paths {
+    "/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description `POST /auth/change-password` — cambio de la contraseña propia. */
+        post: operations["auth_change_password_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description `POST /auth/login` — autentica y emite tokens. Público, con rate limit por IP. */
+        post: operations["auth_login_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description `POST /auth/logout` — invalida el refresh y limpia la cookie. */
+        post: operations["auth_logout_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET /auth/me` — identidad del usuario autenticado. */
+        get: operations["auth_me_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description `POST /auth/refresh` — renueva el access desde el refresh de la cookie. */
+        post: operations["auth_refresh_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        /** @description Respuesta de la renovación: solo el nuevo access (el refresh rota en la cookie). */
+        AccessToken: {
+            /** @description Nuevo access JWT (vida 15 min). */
+            readonly access: string;
+        };
+        /** @description Cambio de la contraseña propia: actual + nueva (valida política de Django). */
+        ChangePassword: {
+            /** @description Contraseña actual. */
+            current_password: string;
+            /** @description Nueva contraseña. Debe cumplir la política de contraseñas de Django. */
+            new_password: string;
+        };
+        /** @description Mensaje único en español. Forma del contrato de errores y de los avisos 200. */
+        Detail: {
+            /** @description Mensaje para el usuario. */
+            readonly detail: string;
+        };
+        /** @description Credenciales de entrada del login. */
+        Login: {
+            /** @description Identificador de login. */
+            username: string;
+            /** @description Contraseña del usuario. */
+            password: string;
+        };
+        /**
+         * @description * `JEFE` - Jefe
+         *     * `SUPERVISOR` - Supervisor
+         *     * `RUTA` - Responsable de ruta
+         *     * `USUARIO` - Usuario
+         * @enum {string}
+         */
+        RoleEnum: "JEFE" | "SUPERVISOR" | "RUTA" | "USUARIO";
+        /**
+         * @description Respuesta del login: access en el cuerpo + identidad embebida.
+         *
+         *     El refresh NO aparece aquí: viaja solo en la cookie httpOnly.
+         */
+        TokenResponse: {
+            /** @description Access JWT (vida 15 min). El cliente lo mantiene en memoria. */
+            readonly access: string;
+            readonly user: components["schemas"]["UserIdentity"];
+        };
+        /** @description Identidad del usuario autenticado (respuesta de `login` y de `me`). */
+        UserIdentity: {
+            readonly id: number;
+            /**
+             * Nombre de usuario
+             * @description Requerido. 150 carácteres como máximo. Únicamente letras, dígitos y @/./+/-/_
+             */
+            readonly username: string;
+            /** Nombre */
+            readonly first_name: string;
+            /** Apellidos */
+            readonly last_name: string;
+            /**
+             * @description Rol del sistema. La autorización fina por rol se define en access-control (F2).
+             *
+             *     * `JEFE` - Jefe
+             *     * `SUPERVISOR` - Supervisor
+             *     * `RUTA` - Responsable de ruta
+             *     * `USUARIO` - Usuario
+             */
+            readonly role: components["schemas"]["RoleEnum"];
+            /**
+             * Activo
+             * @description Indica si el usuario debe ser tratado como activo. Desmarque esta opción en lugar de borrar la cuenta.
+             */
+            readonly is_active: boolean;
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;
@@ -14,4 +170,152 @@ export interface components {
     pathItems: never;
 }
 export type $defs = Record<string, never>;
-export type operations = Record<string, never>;
+export interface operations {
+    auth_change_password_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePassword"];
+                "application/x-www-form-urlencoded": components["schemas"]["ChangePassword"];
+                "multipart/form-data": components["schemas"]["ChangePassword"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    auth_login_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Login"];
+                "application/x-www-form-urlencoded": components["schemas"]["Login"];
+                "multipart/form-data": components["schemas"]["Login"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    auth_logout_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    auth_me_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserIdentity"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    auth_refresh_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessToken"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+}

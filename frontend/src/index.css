@@ -1,63 +1,140 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
 
-/* Tailwind 4: se conserva el theme/darkMode definido en JS (tokens desde variables CSS). */
-@config '../tailwind.config.js';
+/* Modo oscuro por clase .dark en <html> (lo gobierna el ThemeProvider). */
+@custom-variant dark (&:is(.dark *));
 
 /*
-  Design tokens (config.yaml — sistema visual). Variables CSS de shadcn en :root y .dark.
-  Tailwind extiende su theme desde estas variables (ver tailwind.config.js).
-  CERO hex literales en componentes: todo color sale de un token.
+  Design tokens (config.yaml — sistema visual). Contrato canónico de variables CSS de shadcn
+  en :root y .dark, más tokens propios del proyecto (--surface y semánticos de estado) por
+  encima del set shadcn. Tailwind expone las utilidades vía @theme inline (CSS-first, TW4).
+  CERO hex literales en componentes: este archivo es la ÚNICA fuente de color.
 
   - Acento índigo frío (--primary), SEPARADO de los estados.
-  - Semánticos (success/warning/danger/info) EXCLUSIVOS de estados; nunca decorativos.
+  - --destructive ES un estado (acción peligrosa), no un acento decorativo.
+  - Semánticos propios (success/warning/danger/info) EXCLUSIVOS de estados; nunca decorativos.
   - Neutros cálidos de baja saturación (lenguaje Notion/Claude).
 */
 
+:root {
+  /* Neutros — modo claro */
+  --background: #faf9f7;
+  --foreground: #20201e;
+  --card: #ffffff;
+  --card-foreground: #20201e;
+  --popover: #ffffff;
+  --popover-foreground: #20201e;
+
+  /* Acento índigo frío (modo claro) */
+  --primary: #4f52c9;
+  --primary-foreground: #ffffff;
+
+  /* Neutros de bajo énfasis (derivados: cálidos, sin nuevo color de identidad) */
+  --secondary: #f1efea;
+  --secondary-foreground: #20201e;
+  --muted: #f1efea;
+  --muted-foreground: #6f6e69;
+  --accent: #f1efea;
+  --accent-foreground: #20201e;
+
+  /* Estado destructivo (= danger) */
+  --destructive: #be4940;
+  --destructive-foreground: #ffffff;
+
+  /* Bordes, inputs y foco */
+  --border: #e9e7e1;
+  --input: #e9e7e1;
+  --ring: #4f52c9;
+
+  /* Radio base (= md) para componentes que leen var(--radius) directo */
+  --radius: 8px;
+
+  /* Tokens propios POR ENCIMA del set shadcn (modo claro) */
+  --surface: #ffffff;
+  --success: #3e875a;
+  --warning: #b07d1c;
+  --danger: #be4940;
+  --info: #3c6fa2;
+}
+
+.dark {
+  /* Neutros — modo oscuro */
+  --background: #191816;
+  --foreground: #eceae5;
+  --card: #232220;
+  --card-foreground: #eceae5;
+  --popover: #232220;
+  --popover-foreground: #eceae5;
+
+  /* Acento índigo frío (modo oscuro) */
+  --primary: #8488e6;
+  --primary-foreground: #191816;
+
+  /* Neutros de bajo énfasis (modo oscuro) */
+  --secondary: #2a2825;
+  --secondary-foreground: #eceae5;
+  --muted: #2a2825;
+  --muted-foreground: #a29f99;
+  --accent: #2a2825;
+  --accent-foreground: #eceae5;
+
+  /* Estado destructivo (= danger, modo oscuro) */
+  --destructive: #de7269;
+  --destructive-foreground: #191816;
+
+  /* Bordes, inputs y foco */
+  --border: #312e2a;
+  --input: #312e2a;
+  --ring: #8488e6;
+
+  /* Tokens propios POR ENCIMA del set shadcn (modo oscuro) */
+  --surface: #232220;
+  --success: #67b083;
+  --warning: #d9a53f;
+  --danger: #de7269;
+  --info: #6b97c4;
+}
+
+/*
+  Mapeo CSS-first (Tailwind v4): expone los tokens como utilidades (bg-*, text-*, border-*,
+  rounded-*). Sustituye al antiguo theme.extend basado en tailwind.config.js (eliminado).
+*/
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Tokens propios del proyecto */
+  --color-surface: var(--surface);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  /* Escala de radios (valores exactos de config.yaml): sm 4 / md 8 / lg 12 / pill 999 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+}
+
 @layer base {
-  :root {
-    /* Neutros — modo claro */
-    --background: #faf9f7;
-    --surface: #ffffff;
-    --foreground: #20201e;
-    --muted-foreground: #6f6e69;
-    --border: #e9e7e1;
-
-    /* Acento índigo frío (modo claro) */
-    --primary: #4f52c9;
-    --primary-foreground: #ffffff;
-
-    /* Semánticos de estado (modo claro) */
-    --success: #3e875a;
-    --warning: #b07d1c;
-    --danger: #be4940;
-    --info: #3c6fa2;
-
-    /* Radios: sm 4 / md 8 / lg 12 / pill 999 */
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-pill: 999px;
-  }
-
-  .dark {
-    /* Neutros — modo oscuro */
-    --background: #191816;
-    --surface: #232220;
-    --foreground: #eceae5;
-    --muted-foreground: #a29f99;
-    --border: #312e2a;
-
-    /* Acento índigo frío (modo oscuro) */
-    --primary: #8488e6;
-    --primary-foreground: #191816;
-
-    /* Semánticos de estado (modo oscuro) */
-    --success: #67b083;
-    --warning: #d9a53f;
-    --danger: #de7269;
-    --info: #6b97c4;
-  }
-
   * {
     border-color: var(--border);
   }

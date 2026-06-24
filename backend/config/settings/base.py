@@ -73,13 +73,19 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "corsheaders",
 ]
 
 LOCAL_APPS = [
     "apps.common",
+    "apps.accounts",
 ]
+
+# Modelo de usuario propio (accounts.User extiende AbstractUser con `role`).
+# DEBE definirse antes de la primera migración del proyecto.
+AUTH_USER_MODEL = "accounts.User"
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -162,10 +168,34 @@ REST_FRAMEWORK = {
 }
 
 # SimpleJWT — access 15 min / refresh 7 días (decisión cerrada §1).
+# Rotación + blacklist tras rotación: cada refresh emite uno nuevo e invalida el anterior.
+# SIGNING_KEY: clave dedicada desde el entorno (Secret Manager en prod); si falta, cae a
+# DJANGO_SECRET_KEY para no romper el arranque local. NUNCA un literal en el repo.
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "SIGNING_KEY": env("JWT_SIGNING_KEY") or SECRET_KEY,
 }
+
+# Cookie del refresh token (httpOnly). El access NUNCA va en cookie: viaja en el cuerpo y
+# el cliente lo mantiene en memoria. Atributos configurables por entorno (cross-site vs.
+# subdominios). `Secure` se fuerza en prod; en local se permite false para http://localhost.
+AUTH_COOKIE_NAME = "refresh_token"
+AUTH_COOKIE_PATH = "/auth"
+AUTH_COOKIE_HTTPONLY = True
+AUTH_COOKIE_SECURE = (env("AUTH_COOKIE_SECURE", "false") or "false").lower() == "true"
+AUTH_COOKIE_SAMESITE = env("AUTH_COOKIE_SAMESITE", "Lax") or "Lax"
+AUTH_COOKIE_DOMAIN = env("AUTH_COOKIE_DOMAIN") or None
+
+# Umbral de rate limit del login (django-ratelimit). Constante centralizada, no literal.
+LOGIN_RATELIMIT = env("LOGIN_RATELIMIT", "5/m") or "5/m"
+
+# El frontend envía la cookie de refresh con withCredentials: el backend debe permitir
+# credenciales en CORS. El origen permitido se acota por entorno (CORS_ALLOWED_ORIGINS);
+# nunca `*` junto con credenciales.
+CORS_ALLOW_CREDENTIALS = True
 
 # drf-spectacular — el schema OpenAPI del backend es la fuente de tipos del frontend.
 SPECTACULAR_SETTINGS = {
