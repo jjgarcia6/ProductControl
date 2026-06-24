@@ -1,4 +1,4 @@
-"""Settings de desarrollo. DEBUG activo; DB local (sqlite) si no hay DATABASE_URL."""
+"""Settings de desarrollo. DEBUG activo; DB PostgreSQL vía DATABASE_URL (local o Supabase)."""
 
 from .base import *  # noqa: F401,F403
 from .base import env

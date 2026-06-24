@@ -18,6 +18,7 @@ from datetime import timedelta
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 # backend/ (config/settings/base.py -> parents: settings, config, backend)
@@ -121,18 +122,15 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 
-# Database — Supabase (PostgreSQL) vía DATABASE_URL. Cada entorno decide el fallback.
+# Database — PostgreSQL en TODOS los entornos vía DATABASE_URL (sin fallback SQLite):
+# Supabase (Session pooler IPv4) en prod; contenedor local (docker-compose.dev.yml) en dev/CI.
 DATABASE_URL = env("DATABASE_URL")
-if DATABASE_URL:
-    DATABASES = {"default": parse_database_url(DATABASE_URL)}
-else:
-    # Fallback local para arrancar sin credenciales de Supabase (dev/CI).
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+if not DATABASE_URL:  # pragma: no cover - guardia de configuración
+    raise ImproperlyConfigured(
+        "DATABASE_URL es obligatorio (PostgreSQL). En dev/CI usa el Postgres local de "
+        "docker-compose.dev.yml; en prod, la Session pooler de Supabase."
+    )
+DATABASES = {"default": parse_database_url(DATABASE_URL)}
 
 
 # Password validation
