@@ -17,11 +17,15 @@ el mixin de la clase 2; las otras dos son convenciones que cada change respeta:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypeVar
 
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+
+# Parametrizado por el modelo concreto: cada catálogo que herede SoftDeleteModel
+# obtiene `objects`/querysets tipados a SU clase (Profile.objects -> Profile, etc.).
+_SD = TypeVar("_SD", bound="SoftDeleteModel")
 
 
 class TimeStampedModel(models.Model):
@@ -34,13 +38,13 @@ class TimeStampedModel(models.Model):
         abstract = True
 
 
-class SoftDeleteQuerySet(models.QuerySet["SoftDeleteModel"]):
+class SoftDeleteQuerySet(models.QuerySet[_SD]):
     """QuerySet que distingue filas vivas de borradas lógicamente."""
 
-    def alive(self) -> SoftDeleteQuerySet:
+    def alive(self) -> SoftDeleteQuerySet[_SD]:
         return self.filter(deleted_at__isnull=True)
 
-    def dead(self) -> SoftDeleteQuerySet:
+    def dead(self) -> SoftDeleteQuerySet[_SD]:
         return self.filter(deleted_at__isnull=False)
 
     def delete(self) -> int:  # type: ignore[override]
@@ -48,10 +52,10 @@ class SoftDeleteQuerySet(models.QuerySet["SoftDeleteModel"]):
         return self.update(deleted_at=timezone.now())
 
 
-class SoftDeleteManager(models.Manager["SoftDeleteModel"]):
+class SoftDeleteManager(models.Manager[_SD]):
     """Manager por defecto: SOLO devuelve filas vivas (deleted_at IS NULL)."""
 
-    def get_queryset(self) -> SoftDeleteQuerySet:
+    def get_queryset(self) -> SoftDeleteQuerySet[_SD]:
         return SoftDeleteQuerySet(self.model, using=self._db).alive()
 
 

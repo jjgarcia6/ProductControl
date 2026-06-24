@@ -1,0 +1,126 @@
+# Delta para access-control
+<!-- Keywords Gherkin en español (DADO/CUANDO/ENTONCES/Y); keywords normativos RFC 2119 en inglés. -->
+<!-- Primer change del dominio `access-control`: todos los requisitos son ADDED. -->
+
+## ADDED Requirements
+
+### Requirement: Perfil de permisos
+El sistema MUST permitir definir perfiles que agrupan permisos. Cada perfil MUST tener un nombre
+único y un conjunto de permisos por `(módulo, acción)` tomados de un catálogo conocido, además de
+flags de capacidad. Los perfiles son catálogo configurable (soft delete clase 2). Los errores de
+validación MUST seguir el contrato de errores uniforme.
+
+#### Scenario: Jefe crea un perfil con permisos válidos
+- **DADO** que el usuario con rol `Jefe` dispone de un catálogo de módulos y acciones conocido
+- **Y** que los datos ingresados cumplen con el esquema del Diccionario de Datos
+- **CUANDO** el Frontend envía la solicitud al endpoint `POST /authz/profiles`
+- **ENTONCES** el Backend MUST procesar la solicitud dentro de `transaction.atomic()` y persistir el perfil con sus permisos en PostgreSQL
+- **Y** el Backend MUST registrar la operación en `audit_log` con acción `CREATE`
+- **Y** el perfil MUST quedar disponible para asignación
+- **Y** el Frontend MUST mostrar una notificación de éxito usando tokens del theme
+
+#### Scenario: Jefe crea un perfil con nombre duplicado
+- **DADO** que ya existe un perfil activo con `name = "Supervisor"`
+- **CUANDO** el Frontend intenta crear otro perfil con el mismo `name` en `POST /authz/profiles`
+- **ENTONCES** el Backend MUST NOT crear el perfil
+- **Y** el Backend MUST retornar HTTP `400 Bad Request` con `{campo: [mensajes]}` en el campo `name`
+- **Y** el Frontend MUST mostrar el mensaje de error en el campo correspondiente del formulario
+
+#### Scenario: Jefe crea un perfil con un permiso fuera del catálogo
+- **DADO** que el payload incluye un `(módulo, acción)` que no existe en el catálogo conocido
+- **CUANDO** el Frontend intenta enviar la solicitud al endpoint `POST /authz/profiles`
+- **ENTONCES** el Backend MUST NOT procesar la solicitud
+- **Y** el Backend MUST retornar HTTP `400 Bad Request` con el detalle del campo inválido (serializer DRF)
+
+### Requirement: Asignación de perfil a usuario
+Cada usuario MUST estar asociado a exactamente un perfil. La autorización del sistema MUST resolverse
+por el perfil del usuario, no por su `role` nominal. Solo el `Jefe` MUST poder asignar perfiles.
+
+#### Scenario: Jefe asigna un perfil existente a un usuario
+- **DADO** que el usuario con rol `Jefe` y un perfil de destino existen
+- **CUANDO** el Frontend envía la solicitud al endpoint `POST /authz/users/{id}/assign-profile`
+- **ENTONCES** el Backend MUST procesar la solicitud dentro de `transaction.atomic()` y persistir la asignación
+- **Y** el Backend MUST registrar la operación en `audit_log` con acción `UPDATE`
+- **Y** las decisiones de autorización del usuario MUST resolverse según ese perfil
+
+#### Scenario: Jefe asigna un perfil inexistente
+- **DADO** que el `profile_id` enviado no corresponde a ningún perfil activo
+- **CUANDO** el Frontend envía la solicitud al endpoint `POST /authz/users/{id}/assign-profile`
+- **ENTONCES** el Backend MUST retornar HTTP `404 Not Found` con `{detail}` en español
+- **Y** el Backend MUST NOT modificar el perfil del usuario
+
+#### Scenario: Usuario sin rol Jefe intenta asignar un perfil
+- **DADO** que el usuario tiene un rol distinto de `Jefe`
+- **CUANDO** intenta acceder al endpoint `POST /authz/users/{id}/assign-profile`
+- **ENTONCES** el Backend MUST retornar HTTP `403 Forbidden` con `{detail}` en español
+- **Y** el Backend MUST NOT modificar el perfil del usuario
+
+#### Scenario: La identidad del usuario incluye el perfil
+- **DADO** un usuario autenticado con perfil asignado
+- **CUANDO** el Frontend solicita su identidad en `GET /auth/me`
+- **ENTONCES** el Backend MUST responder `200 OK` incluyendo el perfil del usuario además de su rol
+
+### Requirement: Autorización por módulo y acción
+El sistema MUST permitir o denegar cada acción sobre un módulo según el perfil del usuario. Cuando se
+deniega, el sistema MUST responder `403 Forbidden` con `{detail}` en español, sin filtrar la
+estructura interna de permisos.
+
+#### Scenario: Usuario ejecuta una acción permitida por su perfil
+- **DADO** un usuario cuyo perfil permite la acción sobre un módulo
+- **CUANDO** ejecuta esa acción en el endpoint correspondiente
+- **ENTONCES** el Backend MUST autorizar la operación y procesarla normalmente
+
+#### Scenario: Usuario intenta una acción no permitida por su perfil
+- **DADO** un usuario cuyo perfil no permite la acción sobre un módulo
+- **CUANDO** intenta ejecutar esa acción en el endpoint correspondiente
+- **ENTONCES** el Backend MUST retornar HTTP `403 Forbidden` con `{detail}` en español
+- **Y** el mensaje MUST NOT revelar qué permiso específico faltó si eso expone estructura interna sensible
+
+### Requirement: Campos invisibles por perfil
+El sistema MUST omitir de la respuesta serializada los campos registrados como sensibles cuando el
+perfil del usuario no tiene permiso de verlos. Un campo invisible MUST NOT aparecer en la respuesta
+(no basta con marcarlo de solo lectura ni enmascararlo).
+
+#### Scenario: Campo sensible omitido para un perfil sin acceso
+- **DADO** un recurso con un campo registrado como sensible en el registro central
+- **Y** un usuario cuyo perfil no puede ver ese campo
+- **CUANDO** consulta el recurso
+- **ENTONCES** la respuesta serializada MUST NOT incluir ese campo (ni su clave ni su valor)
+
+#### Scenario: Campo sensible visible para un perfil con acceso
+- **DADO** un recurso con un campo registrado como sensible en el registro central
+- **Y** un usuario cuyo perfil puede ver ese campo
+- **CUANDO** consulta el recurso
+- **ENTONCES** la respuesta serializada MUST incluir ese campo con su valor
+
+### Requirement: Capacidad de auto-aprobación
+El perfil MUST exponer un flag de auto-aprobación consultable. La capacidad aquí es solo estructural;
+su aplicación efectiva (llevar un ingreso de BORRADOR a VERIFICADO sin supervisor) se define en
+`intake`.
+
+#### Scenario: Perfil con auto-aprobación habilitada
+- **DADO** un perfil con el flag de auto-aprobación habilitado
+- **CUANDO** se consulta la capacidad del perfil
+- **ENTONCES** el sistema MUST indicar que la auto-aprobación está habilitada
+
+#### Scenario: Perfil con auto-aprobación deshabilitada
+- **DADO** un perfil con el flag de auto-aprobación deshabilitado
+- **CUANDO** se consulta la capacidad del perfil
+- **ENTONCES** el sistema MUST indicar que la auto-aprobación NO está habilitada
+
+### Requirement: Perfiles semilla del sistema
+El sistema MUST proveer cuatro perfiles semilla correspondientes a los roles Jefe, Supervisor,
+Responsable de ruta y Usuario, con permisos por defecto coherentes con cada rol. El seed MUST ser
+idempotente y reversible.
+
+#### Scenario: Perfiles semilla disponibles tras la inicialización
+- **DADO** un sistema recién inicializado (migraciones aplicadas)
+- **CUANDO** se ejecuta el seed de perfiles del sistema
+- **ENTONCES** MUST existir los cuatro perfiles (Jefe, Supervisor, Responsable de ruta, Usuario)
+- **Y** cada uno MUST quedar disponible para asignación
+
+#### Scenario: El seed se aplica dos veces sin duplicar perfiles
+- **DADO** que los cuatro perfiles semilla ya existen
+- **CUANDO** se ejecuta el seed nuevamente
+- **ENTONCES** el sistema MUST NOT crear perfiles duplicados
+- **Y** el conjunto de perfiles semilla MUST permanecer en cuatro

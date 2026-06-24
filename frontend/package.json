@@ -13,7 +13,7 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
-    "codegen": "openapi-typescript ../backend/schema.yml -o src/shared/api/schema.ts && openapi-zod-client ../backend/schema.yml -o src/shared/api/zod.ts -t codegen/zod-schemas-only.hbs",
+    "codegen": "openapi-typescript ../backend/schema.yml -o src/shared/api/schema.ts && openapi-zod-client ../backend/schema.yml -o src/shared/api/zod.ts -t codegen/zod-schemas-only.hbs && node codegen/fix-zod-v4.mjs src/shared/api/zod.ts",
     "preview": "vite preview"
   },
   "dependencies": {

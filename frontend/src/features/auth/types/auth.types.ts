@@ -13,8 +13,12 @@ export const changePasswordSchema = schemas.ChangePassword
 export const userIdentitySchema = schemas.UserIdentity
 export const tokenResponseSchema = schemas.TokenResponse
 export const accessTokenSchema = schemas.AccessToken
+export const profileSchema = schemas.ProfileRead
 
 export type LoginInput = z.infer<typeof loginSchema>
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>
 export type UserIdentity = z.infer<typeof userIdentitySchema>
 export type Role = UserIdentity['role']
+// F2 (access-control): perfil de permisos embebido en la identidad. Fuente de verdad
+// del gating en el cliente (defensa secundaria; la autoritativa es el backend).
+export type ProfileType = z.infer<typeof profileSchema>

@@ -15,6 +15,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # Auth (F1): el prefijo /auth coincide con el Path de la cookie de refresh.
     path("auth/", include("apps.accounts.urls")),
+    # Access-control (F2): perfiles y asignación de perfil.
+    path("authz/", include("apps.authz.urls")),
     # OpenAPI: el schema es la fuente de tipos del frontend.
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

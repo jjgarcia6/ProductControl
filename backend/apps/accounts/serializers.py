@@ -13,6 +13,8 @@ from __future__ import annotations
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
+from apps.authz.serializers import ProfileReadSerializer
+
 from .models import User
 
 
@@ -28,11 +30,17 @@ class LoginSerializer(serializers.Serializer[dict[str, str]]):
 
 
 class UserIdentitySerializer(serializers.ModelSerializer[User]):
-    """Identidad del usuario autenticado (respuesta de `login` y de `me`)."""
+    """Identidad del usuario autenticado (respuesta de `login` y de `me`).
+
+    F2 añade `profile` (perfil de permisos, fuente de verdad de la autorización). El
+    frontend lo usa para el gating; puede ser `null` mientras un usuario no tenga perfil.
+    """
+
+    profile = ProfileReadSerializer(read_only=True, allow_null=True)
 
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "role", "is_active"]
+        fields = ["id", "username", "first_name", "last_name", "role", "is_active", "profile"]
         read_only_fields = fields
 
 

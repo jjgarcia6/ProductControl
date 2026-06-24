@@ -21,6 +21,7 @@ const USER: UserIdentity = {
   last_name: 'Pérez',
   role: 'SUPERVISOR',
   is_active: true,
+  profile: null,
 }
 
 beforeEach(() => {

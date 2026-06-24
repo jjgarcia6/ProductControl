@@ -33,8 +33,10 @@ artifacts:
         de todas las fases; es la fuente de verdad viva del comportamiento esperado).
 
       Al crear o archivar un cambio, el delta del cambio MUST reflejarse en la spec global.
-      Dominios válidos: base, auth, usuarios, directorio, productos, kardex, ingresos, rutas,
-      pedidos, entregas, devoluciones, cobros, pagos, notificaciones, reportes, cierre, merma, trazabilidad.
+      Dominios (capabilities) válidos: base, auth, access-control, user-management, directory,
+      products, pricing, bulk-import, system-settings, period, audit, kardex, intake, merma,
+      routes, orders, deliveries, returns, receivables, payables, credit, opening-balances,
+      notifications, reports, dashboards.
     instruction: |
       Definir los comportamientos esperados del sistema mediante escenarios BDD.
       Reglas de calidad REQUIRED:

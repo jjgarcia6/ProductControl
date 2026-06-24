@@ -11,6 +11,25 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    # PostgreSQL es obligatorio (sin fallback SQLite): todos los gates que cargan settings
+    # (mypy, pytest, spectacular) necesitan DATABASE_URL. Servicio efímero + DATABASE_URL a nivel
+    # de job para que todos los pasos lo vean.
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     # working-directory: backend SOLO en este job (los gates de calidad corren ahí).
     # No se pone a nivel de workflow porque contaminaría los `run` internos de
     # acciones de terceros (p. ej. trivy) en los jobs image/deploy.
