@@ -93,15 +93,27 @@ está protegida; todo cambio entra por Pull Request con el pipeline verde. La CI
   (`db.<ref>.supabase.co`) es IPv6-only e inalcanzable desde muchos entornos. `DATABASE_URL` es
   **obligatorio** (PostgreSQL en todos los entornos; **sin fallback SQLite**); dev y tests usan el
   Postgres local de `docker-compose.dev.yml`, y el CI levanta su propio servicio Postgres. Usuario
-  propio `accounts.User` (extiende `AbstractUser` con `role`); F2 añade el FK `profile`.
+  propio `accounts.User` (extiende `AbstractUser` con `role`); F2 añade el FK `profile`; F3 el flag
+  `must_change_password`.
 - **Auth:** SimpleJWT (access 15 min / refresh 7 días, rotación + blacklist). El refresh viaja en
   cookie httpOnly (`/auth`); el access NUNCA en cookie — va en el cuerpo y vive en memoria del cliente.
+  **Cambio forzado (F3):** un middleware (`apps/accounts/middleware.py`) resuelve el usuario por el JWT
+  y, mientras `must_change_password` esté activo, bloquea con 403 toda operación salvo `me`,
+  `change-password` y `logout`.
 - **Autorización (access-control, F2 — app `authz`):** `Profile` (catálogo, soft delete clase 2) es la
   fuente de verdad de los permisos por `(módulo, acción)`; las permission classes de DRF resuelven por
   el perfil del usuario (deniegan con 403 `{detail}` genérico) y el `SensitiveFieldsMixin` OMITE del
   output los campos sensibles que el perfil no puede ver (no los enmascara). La autorización MUST
   resolverse por el perfil, nunca por el `role` nominal. El catálogo de módulos/acciones y el registro
   de campos sensibles viven en `apps/authz/catalog.py`, extensibles por fase.
+- **Gestión de identidad (user-management, F3 — apps `accounts` + `authz`):** consola de administración
+  restringida al Jefe. Usuarios (`/auth/users…`): alta/edición, **reset administrativo** (contraseña
+  temporal dada o generada + activa `must_change_password` + blacklist), desactivación/reactivación
+  (blacklist). Perfiles (`PATCH/DELETE /authz/profiles/{id}`): editar permisos y baja (soft delete clase
+  2; **409** si tiene usuarios asignados). La asignación de perfil de F2 (`assign-profile`) se extiende
+  para sincronizar `role` + blacklist. La autorización **reutiliza** el módulo `access-control`
+  (read/create/update), sin tocar el seed. 409 vía `Conflict` en `apps/common/exceptions.py`. Eventos de
+  seguridad auditados con `@audit`.
 - **Cloud Run = stateless:** filesystem efímero, escribir SOLO en `/tmp`; sin estado en memoria
   entre requests; sin threads de fondo (tareas vía Cloud Scheduler, no Celery); escuchar en `$PORT`.
 
