@@ -47,6 +47,16 @@ class User(AbstractUser):
         related_name="users",
         help_text="Perfil que gobierna la autorización del usuario (no el role).",
     )
+    # F3 (user-management): tras un reset administrativo el usuario recibe una contraseña
+    # temporal y este flag queda activo; mientras lo esté, solo puede cambiar su contraseña.
+    # El cambio de contraseña propio (F1) lo desactiva.
+    must_change_password = models.BooleanField(
+        default=False,
+        help_text=(
+            "Obliga al usuario a cambiar su contraseña en el primer acceso tras un reset "
+            "administrativo. Se desactiva al cambiarla con éxito."
+        ),
+    )
 
     class Meta:
         db_table = "accounts_user"

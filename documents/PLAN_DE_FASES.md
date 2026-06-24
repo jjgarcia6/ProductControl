@@ -44,7 +44,7 @@ revisar specs/design  → /opsx:apply  → verificar (CI) → /opsx:archive
 | **Etapa A — Foundation** ||||
 | 1 | add-auth | auth (+roles base) | F0 |
 | 2 | add-access-control | access-control | F1 |
-| 3 | add-user-management | user-management | F1, F2 |
+| 3 | add-user-management | user-management (+ modifica auth y access-control: admin de perfiles) | F1, F2 |
 | 4 | add-directory | directory (+ inicia credit: parámetros) | F1, F2 |
 | 5 | add-products | products | F1, F2 |
 | 6 | add-pricing | pricing | F4, F5 |
@@ -108,11 +108,11 @@ revisar specs/design  → /opsx:apply  → verificar (CI) → /opsx:archive
 - **Pendiente cliente:** —.
 
 #### Fase 3 — add-user-management
-- **Capability:** inicia `user-management`.
+- **Capability:** inicia `user-management`; modifica `auth` (flag de cambio forzado) y `access-control` (administración de perfiles, completando F2).
 - **Depende de:** F1, F2 · **Desbloquea:** — (operativamente necesaria para el go-live; no bloquea la construcción de módulos de negocio, que se sirven con usuarios sembrados).
-- **Alcance:** CRUD de usuarios (crear/editar/desactivar); asignación y cambio de rol; **reset administrativo** de contraseña; contraseña temporal con **cambio forzado en el primer login**; **desactivación que invalida (blacklist) el refresh** del usuario.
+- **Alcance:** CRUD de usuarios (crear/editar/desactivar/reactivar); asignación y cambio de perfil (extiende el `assign-profile` de F2 para sincronizar el `role` nominal e invalidar el refresh); **reset administrativo** de contraseña; contraseña temporal con **cambio forzado en el primer login**; **desactivación que invalida (blacklist) el refresh** del usuario; **administración de perfiles** (editar permisos por módulo/acción + flags; baja con soft delete clase 2 validando que no haya usuarios asignados), completando lo que F2 dejó en modelo + mecanismo + seed.
 - **Fuera de alcance:** cambio de contraseña propio (queda en F1); recuperación self-service por email (diferida a post-F25, solo si el cliente la pide — depende de la infraestructura de email de F22).
-- **Invariantes config:** solo el Jefe gestiona usuarios; auditoría de eventos de seguridad (reset, desactivación, cambio de rol).
+- **Invariantes config:** solo el Jefe gestiona identidad (usuarios y perfiles); auditoría de eventos de seguridad (reset, desactivación, cambio de perfil).
 - **Requerimientos:** 2.5 (roles). El ciclo de vida de identidad es un **gap** respecto a v1.1.
 - **Pendiente cliente:** —.
 
@@ -372,7 +372,7 @@ Los *parámetros* de crédito (plazo, límite, días de aviso) entran como campo
 ### v1.1
 | # | Cambio | Tipo |
 |---|---|---|
-| 1 | `add-user-management` (F3): ciclo de vida de identidad — alta/baja, rol, reset administrativo, contraseña temporal, desactivación que invalida refresh | Nueva fase |
+| 1 | `add-user-management` (F3): ciclo de vida de identidad — alta/baja, asignación/cambio de perfil, reset administrativo, contraseña temporal, desactivación que invalida refresh; más la administración de perfiles que completa F2 | Nueva fase |
 | 2 | `add-bulk-import` (F7): importación masiva CSV/Excel de maestros (productos, fichas) | Nueva fase |
 | 3 | `add-system-settings` (F8): parámetros del sistema, incl. toggle de costeo nominal/efectivo | Nueva fase |
 | 4 | `add-opening-balances` (F20): carga inicial de stock y saldos CxC/CxP para go-live | Nueva fase |

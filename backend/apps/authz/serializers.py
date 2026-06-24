@@ -119,3 +119,43 @@ class AssignProfileSerializer(serializers.Serializer[dict[str, Any]]):
     """Entrada del endpoint de asignación perfil↔usuario."""
 
     profile_id = serializers.UUIDField(help_text="Perfil activo a asignar al usuario.")
+
+
+class ProfileAdminWriteSerializer(serializers.ModelSerializer[Profile]):
+    """Edición de un perfil (F3): permisos, campos visibles, descripción y flags.
+
+    No edita `name` (la identidad del perfil es estable); valida contra el catálogo igual
+    que la creación (DRY de reglas con `ProfileWriteSerializer`).
+    """
+
+    permissions = serializers.DictField(
+        child=serializers.ListField(child=serializers.CharField()),
+        required=False,
+        help_text="Permisos por módulo: {módulo: [acción, ...]} del catálogo.",
+    )
+    visible_sensitive_fields = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        help_text="Campos sensibles visibles ('recurso.campo') del registro.",
+    )
+
+    class Meta:
+        model = Profile
+        fields = ["description", "permissions", "visible_sensitive_fields", "auto_approval"]
+
+    def validate_permissions(self, value: dict[str, list[str]]) -> dict[str, list[str]]:
+        for module, actions in value.items():
+            for action in actions:
+                if not is_valid_permission(module, action):
+                    raise serializers.ValidationError(
+                        f"El permiso '{module}:{action}' no existe en el catálogo."
+                    )
+        return value
+
+    def validate_visible_sensitive_fields(self, value: list[str]) -> list[str]:
+        for field_key in value:
+            if field_key not in SENSITIVE_FIELDS:
+                raise serializers.ValidationError(
+                    f"El campo sensible '{field_key}' no está registrado."
+                )
+        return value

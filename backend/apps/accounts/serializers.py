@@ -40,7 +40,16 @@ class UserIdentitySerializer(serializers.ModelSerializer[User]):
 
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "role", "is_active", "profile"]
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "role",
+            "is_active",
+            "profile",
+            "must_change_password",
+        ]
         read_only_fields = fields
 
 
@@ -93,3 +102,97 @@ class DetailSerializer(serializers.Serializer[dict[str, str]]):
     """Mensaje único en español. Forma del contrato de errores y de los avisos 200."""
 
     detail = serializers.CharField(read_only=True, help_text="Mensaje para el usuario.")
+
+
+# --- Administración de usuarios (F3 user-management) --------------------------
+
+
+class UserAdminReadSerializer(serializers.ModelSerializer[User]):
+    """Contrato de lectura de un usuario en la consola de administración."""
+
+    profile = ProfileReadSerializer(read_only=True, allow_null=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "role",
+            "is_active",
+            "profile",
+            "must_change_password",
+        ]
+        read_only_fields = fields
+
+
+class UserAdminWriteSerializer(serializers.ModelSerializer[User]):
+    """Entrada de creación de un usuario. El `role` se sincroniza del perfil (no se envía)."""
+
+    password = serializers.CharField(
+        write_only=True,
+        style={"input_type": "password"},
+        help_text="Contraseña inicial. Debe cumplir la política de contraseñas de Django.",
+    )
+    profile_id = serializers.UUIDField(help_text="Perfil activo a asignar al usuario.")
+
+    class Meta:
+        model = User
+        fields = ["username", "password", "profile_id", "first_name", "last_name"]
+        extra_kwargs = {
+            "first_name": {"required": False},
+            "last_name": {"required": False},
+        }
+
+    def validate_username(self, value: str) -> str:
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Ya existe un usuario con este identificador.")
+        return value
+
+    def validate_password(self, value: str) -> str:
+        validate_password(value)
+        return value
+
+
+class UserAdminUpdateSerializer(serializers.ModelSerializer[User]):
+    """Edición de los datos básicos de un usuario (no toca perfil ni contraseña)."""
+
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name"]
+
+
+class ResetPasswordWriteSerializer(serializers.Serializer[dict[str, object]]):
+    """Reset administrativo: contraseña temporal dada por el admin XOR generada por el sistema."""
+
+    temporary_password = serializers.CharField(
+        write_only=True,
+        required=False,
+        style={"input_type": "password"},
+        help_text="Contraseña temporal definida por el admin. Omitir si `generate` es true.",
+    )
+    generate = serializers.BooleanField(
+        default=False,
+        help_text="Si es true, el sistema genera la contraseña temporal.",
+    )
+
+    def validate(self, attrs: dict[str, object]) -> dict[str, object]:
+        provided = attrs.get("temporary_password")
+        generate = attrs.get("generate")
+        if bool(provided) == bool(generate):
+            raise serializers.ValidationError(
+                "Indique una contraseña temporal o active la generación automática, no ambas."
+            )
+        if provided:
+            validate_password(str(provided))
+        return attrs
+
+
+class ResetPasswordReadSerializer(serializers.Serializer[dict[str, str]]):
+    """Respuesta del reset: la contraseña temporal, devuelta una sola vez."""
+
+    temporary_password = serializers.CharField(
+        read_only=True,
+        help_text="Contraseña temporal. Se comunica una sola vez; el usuario deberá cambiarla.",
+    )

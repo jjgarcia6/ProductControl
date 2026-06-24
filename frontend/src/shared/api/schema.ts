@@ -89,6 +89,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET /auth/users` (listado) y `POST /auth/users` (alta). */
+        get: operations["auth_users_list"];
+        put?: never;
+        /** @description `GET /auth/users` (listado) y `POST /auth/users` (alta). */
+        post: operations["auth_users_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description `PATCH /auth/users/{id}` — edita los datos básicos del usuario. */
+        patch: operations["auth_users_partial_update"];
+        trace?: never;
+    };
+    "/auth/users/{user_id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description `POST /auth/users/{id}/deactivate` — desactiva al usuario e invalida su sesión. */
+        post: operations["auth_users_deactivate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/users/{user_id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description `POST /auth/users/{id}/reactivate` — reactiva al usuario. */
+        post: operations["auth_users_reactivate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/users/{user_id}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description `POST /auth/users/{id}/reset-password` — reset administrativo con cambio forzado. */
+        post: operations["auth_users_reset_password_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/authz/profiles": {
         parameters: {
             query?: never;
@@ -114,14 +200,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description `GET /authz/profiles/{id}` — un perfil por id. */
+        /**
+         * @description `GET` (lectura), `PATCH` (editar permisos) y `DELETE` (baja) de un perfil por id.
+         *
+         *     La edición y la baja (F3) completan la administración que F2 dejó en modelo + seed.
+         */
         get: operations["authz_profiles_retrieve"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * @description `GET` (lectura), `PATCH` (editar permisos) y `DELETE` (baja) de un perfil por id.
+         *
+         *     La edición y la baja (F3) completan la administración que F2 dejó en modelo + seed.
+         */
+        delete: operations["authz_profiles_destroy"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * @description `GET` (lectura), `PATCH` (editar permisos) y `DELETE` (baja) de un perfil por id.
+         *
+         *     La edición y la baja (F3) completan la administración que F2 dejó en modelo + seed.
+         */
+        patch: operations["authz_profiles_partial_update"];
         trace?: never;
     };
     "/authz/users/{user_id}/assign-profile": {
@@ -177,6 +277,31 @@ export interface components {
             /** @description Contraseña del usuario. */
             password: string;
         };
+        /**
+         * @description Edición de un perfil (F3): permisos, campos visibles, descripción y flags.
+         *
+         *     No edita `name` (la identidad del perfil es estable); valida contra el catálogo igual
+         *     que la creación (DRY de reglas con `ProfileWriteSerializer`).
+         */
+        PatchedProfileAdminWrite: {
+            /** @description Descripción opcional del perfil. */
+            description?: string;
+            /** @description Permisos por módulo: {módulo: [acción, ...]} del catálogo. */
+            permissions?: {
+                [key: string]: string[];
+            };
+            /** @description Campos sensibles visibles ('recurso.campo') del registro. */
+            visible_sensitive_fields?: string[];
+            /** @description Capacidad de auto-aprobación (estructural en F2). */
+            auto_approval?: boolean;
+        };
+        /** @description Edición de los datos básicos de un usuario (no toca perfil ni contraseña). */
+        PatchedUserAdminUpdate: {
+            /** Nombre */
+            first_name?: string;
+            /** Apellidos */
+            last_name?: string;
+        };
         /** @description Contrato de lectura de un perfil. */
         ProfileRead: {
             /** Format: uuid */
@@ -209,6 +334,21 @@ export interface components {
             /** @description Capacidad de auto-aprobación (estructural en F2). */
             auto_approval?: boolean;
         };
+        /** @description Respuesta del reset: la contraseña temporal, devuelta una sola vez. */
+        ResetPasswordRead: {
+            /** @description Contraseña temporal. Se comunica una sola vez; el usuario deberá cambiarla. */
+            readonly temporary_password: string;
+        };
+        /** @description Reset administrativo: contraseña temporal dada por el admin XOR generada por el sistema. */
+        ResetPasswordWrite: {
+            /** @description Contraseña temporal definida por el admin. Omitir si `generate` es true. */
+            temporary_password?: string;
+            /**
+             * @description Si es true, el sistema genera la contraseña temporal.
+             * @default false
+             */
+            generate: boolean;
+        };
         /**
          * @description * `JEFE` - Jefe
          *     * `SUPERVISOR` - Supervisor
@@ -226,6 +366,55 @@ export interface components {
             /** @description Access JWT (vida 15 min). El cliente lo mantiene en memoria. */
             readonly access: string;
             readonly user: components["schemas"]["UserIdentity"];
+        };
+        /** @description Contrato de lectura de un usuario en la consola de administración. */
+        UserAdminRead: {
+            readonly id: number;
+            /**
+             * Nombre de usuario
+             * @description Requerido. 150 carácteres como máximo. Únicamente letras, dígitos y @/./+/-/_
+             */
+            readonly username: string;
+            /** Nombre */
+            readonly first_name: string;
+            /** Apellidos */
+            readonly last_name: string;
+            /**
+             * @description Rol del sistema. La autorización fina por rol se define en access-control (F2).
+             *
+             *     * `JEFE` - Jefe
+             *     * `SUPERVISOR` - Supervisor
+             *     * `RUTA` - Responsable de ruta
+             *     * `USUARIO` - Usuario
+             */
+            readonly role: components["schemas"]["RoleEnum"];
+            /**
+             * Activo
+             * @description Indica si el usuario debe ser tratado como activo. Desmarque esta opción en lugar de borrar la cuenta.
+             */
+            readonly is_active: boolean;
+            readonly profile: components["schemas"]["ProfileRead"] | null;
+            /** @description Obliga al usuario a cambiar su contraseña en el primer acceso tras un reset administrativo. Se desactiva al cambiarla con éxito. */
+            readonly must_change_password: boolean;
+        };
+        /** @description Entrada de creación de un usuario. El `role` se sincroniza del perfil (no se envía). */
+        UserAdminWrite: {
+            /**
+             * Nombre de usuario
+             * @description Requerido. 150 carácteres como máximo. Únicamente letras, dígitos y @/./+/-/_
+             */
+            username: string;
+            /** @description Contraseña inicial. Debe cumplir la política de contraseñas de Django. */
+            password: string;
+            /**
+             * Format: uuid
+             * @description Perfil activo a asignar al usuario.
+             */
+            profile_id: string;
+            /** Nombre */
+            first_name?: string;
+            /** Apellidos */
+            last_name?: string;
         };
         /**
          * @description Identidad del usuario autenticado (respuesta de `login` y de `me`).
@@ -259,6 +448,8 @@ export interface components {
              */
             readonly is_active: boolean;
             readonly profile: components["schemas"]["ProfileRead"] | null;
+            /** @description Obliga al usuario a cambiar su contraseña en el primer acceso tras un reset administrativo. Se desactiva al cambiarla con éxito. */
+            readonly must_change_password: boolean;
         };
     };
     responses: never;
@@ -416,6 +607,250 @@ export interface operations {
             };
         };
     };
+    auth_users_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserAdminRead"][];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    auth_users_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserAdminWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["UserAdminWrite"];
+                "multipart/form-data": components["schemas"]["UserAdminWrite"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserAdminRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    auth_users_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedUserAdminUpdate"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedUserAdminUpdate"];
+                "multipart/form-data": components["schemas"]["PatchedUserAdminUpdate"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserAdminRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    auth_users_deactivate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserAdminRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    auth_users_reactivate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserAdminRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    auth_users_reset_password_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["ResetPasswordWrite"];
+                "multipart/form-data": components["schemas"]["ResetPasswordWrite"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResetPasswordRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
     authz_profiles_list: {
         parameters: {
             query?: never;
@@ -501,6 +936,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProfileRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    authz_profiles_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    authz_profiles_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedProfileAdminWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedProfileAdminWrite"];
+                "multipart/form-data": components["schemas"]["PatchedProfileAdminWrite"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
                 };
             };
             403: {

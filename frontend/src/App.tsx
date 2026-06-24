@@ -4,7 +4,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 
 import { Toaster } from '@/components/custom/Toaster'
-import { authDataProvider, authProvider } from '@/features/auth'
+import { authDataProvider, authProvider, ForcePasswordChangeGuard } from '@/features/auth'
 import { HomePage } from '@/pages/HomePage'
 import { dataProvider } from '@/shared/providers/data-provider'
 import { notificationProvider } from '@/shared/providers/notification-provider'
@@ -22,6 +22,12 @@ const LoginPage = lazy(() =>
 )
 const ChangePasswordPage = lazy(() =>
   import('@/pages/ChangePasswordPage').then((m) => ({ default: m.ChangePasswordPage })),
+)
+const UsersAdminPage = lazy(() =>
+  import('@/pages/UsersAdminPage').then((m) => ({ default: m.UsersAdminPage })),
+)
+const ProfilesAdminPage = lazy(() =>
+  import('@/pages/ProfilesAdminPage').then((m) => ({ default: m.ProfilesAdminPage })),
 )
 
 function RouteFallback() {
@@ -53,7 +59,14 @@ function App() {
         >
           <Suspense fallback={<RouteFallback />}>
             <Routes>
-              <Route index element={<HomePage />} />
+              <Route
+                index
+                element={
+                  <ForcePasswordChangeGuard>
+                    <HomePage />
+                  </ForcePasswordChangeGuard>
+                }
+              />
               <Route path="/login" element={<LoginPage />} />
               <Route
                 path="/account/change-password"
@@ -64,6 +77,26 @@ function App() {
                     loading={<RouteFallback />}
                   >
                     <ChangePasswordPage />
+                  </Authenticated>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <Authenticated key="admin-users" redirectOnFail="/login" loading={<RouteFallback />}>
+                    <ForcePasswordChangeGuard>
+                      <UsersAdminPage />
+                    </ForcePasswordChangeGuard>
+                  </Authenticated>
+                }
+              />
+              <Route
+                path="/admin/profiles"
+                element={
+                  <Authenticated key="admin-profiles" redirectOnFail="/login" loading={<RouteFallback />}>
+                    <ForcePasswordChangeGuard>
+                      <ProfilesAdminPage />
+                    </ForcePasswordChangeGuard>
                   </Authenticated>
                 }
               />

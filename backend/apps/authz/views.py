@@ -26,6 +26,7 @@ from .models import Profile
 from .permissions import HasModulePermission
 from .serializers import (
     AssignProfileSerializer,
+    ProfileAdminWriteSerializer,
     ProfileReadSerializer,
     ProfileWriteSerializer,
 )
@@ -57,10 +58,17 @@ class ProfileListCreateView(APIView):
 
 
 class ProfileDetailView(APIView):
-    """`GET /authz/profiles/{id}` — un perfil por id."""
+    """`GET` (lectura), `PATCH` (editar permisos) y `DELETE` (baja) de un perfil por id.
+
+    La edición y la baja (F3) completan la administración que F2 dejó en modelo + seed.
+    """
 
     permission_classes = [IsAuthenticated, HasModulePermission]
-    required_permissions = {"GET": (MODULE_ACCESS_CONTROL, ACTION_READ)}
+    required_permissions = {
+        "GET": (MODULE_ACCESS_CONTROL, ACTION_READ),
+        "PATCH": (MODULE_ACCESS_CONTROL, ACTION_UPDATE),
+        "DELETE": (MODULE_ACCESS_CONTROL, ACTION_UPDATE),
+    }
 
     @extend_schema(
         responses={200: ProfileReadSerializer, 403: DetailSerializer, 404: DetailSerializer}
@@ -68,6 +76,35 @@ class ProfileDetailView(APIView):
     def get(self, request: Request, profile_id: str) -> Response:
         profile = get_object_or_404(Profile, pk=profile_id)
         return Response(ProfileReadSerializer(profile).data, status=200)
+
+    @extend_schema(
+        request=ProfileAdminWriteSerializer,
+        responses={
+            200: ProfileReadSerializer,
+            400: DetailSerializer,
+            403: DetailSerializer,
+            404: DetailSerializer,
+        },
+    )
+    def patch(self, request: Request, profile_id: str) -> Response:
+        profile = get_object_or_404(Profile, pk=profile_id)
+        serializer = ProfileAdminWriteSerializer(instance=profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        updated = services.update_profile_permissions(
+            user=cast(User, request.user),
+            profile=profile,
+            data=serializer.validated_data,
+        )
+        return Response(ProfileReadSerializer(updated).data, status=200)
+
+    @extend_schema(
+        request=None,
+        responses={204: None, 403: DetailSerializer, 404: DetailSerializer, 409: DetailSerializer},
+    )
+    def delete(self, request: Request, profile_id: str) -> Response:
+        profile = get_object_or_404(Profile, pk=profile_id)
+        services.deactivate_profile(user=cast(User, request.user), profile=profile)
+        return Response(status=204)
 
 
 class AssignProfileView(APIView):

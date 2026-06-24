@@ -70,3 +70,15 @@ SYSTEM_PROFILES: dict[str, SystemProfileSpec] = {
         "auto_approval": False,
     },
 }
+
+# Mapa inverso nombre-de-perfil-semilla -> valor de rol nominal (accounts.Role). F3 lo usa
+# para sincronizar el `role` al asignar/crear con un perfil semilla. Los perfiles a medida
+# (sin entrada aquí) no alteran el rol nominal.
+PROFILE_NAME_TO_ROLE: dict[str, str] = {
+    spec["name"]: role for role, spec in SYSTEM_PROFILES.items()
+}
+
+
+def role_for_profile_name(name: str) -> str | None:
+    """Rol nominal que corresponde a un perfil semilla, o None si es a medida."""
+    return PROFILE_NAME_TO_ROLE.get(name)

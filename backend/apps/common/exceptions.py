@@ -18,12 +18,26 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.views import exception_handler as drf_exception_handler
 
 logger = logging.getLogger("django.request")
 
 GENERIC_500_DETAIL = "Ocurrió un error interno. Intente nuevamente."
+
+
+class Conflict(APIException):
+    """Conflicto con el estado actual del recurso (HTTP 409).
+
+    DRF no trae un 409; lo usamos para bajas bloqueadas por dependencias y choques de
+    estado (p. ej. dar de baja un perfil con usuarios asignados). El handler lo emite
+    como `{detail}` por el contrato de errores.
+    """
+
+    status_code = 409
+    default_detail = "La operación entra en conflicto con el estado actual del recurso."
+    default_code = "conflict"
 
 
 def _coerce_messages(value: Any) -> list[str]:

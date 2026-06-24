@@ -22,6 +22,7 @@ const USER: UserIdentity = {
   role: 'SUPERVISOR',
   is_active: true,
   profile: null,
+  must_change_password: false,
 }
 
 beforeEach(() => {
