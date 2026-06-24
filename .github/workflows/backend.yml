@@ -37,12 +37,12 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Instalar uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
 
       - name: Sincronizar dependencias
         run: uv sync --frozen
@@ -61,7 +61,7 @@ jobs:
         run: uv run bandit -c pyproject.toml -r apps config
 
       - name: Escaneo de secretos — gitleaks
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -78,7 +78,7 @@ jobs:
     needs: quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Build de imagen — docker
         # Job sin working-directory: el contexto del build es backend/.
@@ -100,7 +100,7 @@ jobs:
     # Deploy SOLO en main y cuando esté habilitado (requiere secretos de GCP).
     if: github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Autenticación GCP
         uses: google-github-actions/auth@v2
