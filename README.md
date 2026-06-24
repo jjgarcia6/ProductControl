@@ -19,6 +19,18 @@ documents/  # PLAN_DE_FASES.md y runbooks.
 El **backend es la fuente de verdad** del contrato (OpenAPI de DRF). El frontend **genera**
 sus tipos TypeScript y esquemas Zod desde ese contrato; nunca al revés y nunca a mano.
 
+## Capacidades implementadas
+
+El trabajo avanza por fases (ver `documents/PLAN_DE_FASES.md`). Entregadas hasta ahora:
+
+- **F1 · auth** — login (access en memoria + refresh en cookie httpOnly), rotación + blacklist,
+  `me`, logout, cambio de contraseña propio, roles del sistema, rate limit de login.
+- **F2 · access-control** — perfiles configurables (permisos por `(módulo, acción)` desde un
+  catálogo), autorización por perfil en DRF y mecanismo de **campos invisibles** por perfil.
+- **F3 · user-management** — consola de administración (solo Jefe): CRUD de usuarios, **reset
+  administrativo** con contraseña temporal y **cambio forzado** en el primer acceso, desactivación
+  que invalida la sesión, y administración de perfiles (editar permisos / baja con soft delete).
+
 ## Arranque local — Backend
 
 Requiere Python 3.12+ y [`uv`](https://docs.astral.sh/uv/).

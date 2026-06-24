@@ -1,32 +1,50 @@
-# React + TypeScript + Vite
+# Frontend — Sistema de gestión operativa
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React 19 + Vite + TypeScript (strict) + **Refine v5**. Ver `README.md` raíz para el arranque local.
 
-Currently, two official plugins are available:
+> El backend es la **fuente de verdad** del contrato. Los tipos TS y los esquemas **Zod se generan**
+> del OpenAPI con `npm run codegen` (`../backend/schema.yml` → `src/shared/api/{schema,zod}.ts`).
+> NUNCA se escriben a mano. Tras cambiar el contrato del backend, regenera y vuelve a correr `codegen`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Stack y reglas
 
-## React Compiler
+- **Refine v5** gobierna el estado de servidor: React Query vive **dentro** de Refine; no se monta un
+  TanStack Query paralelo. **Zustand** solo para estado de UI/sesión (nunca estado de servidor).
+- **Formularios:** React Hook Form + `zodResolver` con el Zod **generado**.
+- **Tema CSS-first:** `src/index.css` es la **única fuente de color** (variables shadcn vía
+  `@theme inline`, Tailwind v4; sin `tailwind.config.js`). **Cero hex literales** en componentes;
+  modo claro y oscuro por clase `.dark`. shadcn/ui estilo `new-york`, iconos Lucide.
+- **Linter:** ESLint (flat config) — no Oxlint.
+- Alias de import: `@/*` → `src/*`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Arquitectura
 
-## Expanding the Oxlint configuration
+Feature-driven alrededor de los resources de Refine:
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```
+src/features/<feature>/   components/ · hooks/ · types/ · (api/ providers/ store/)
+src/shared/               lógica/contratos compartidos (api/, lib/, providers/, theme/)
+src/components/custom/     componentes visuales reutilizables · src/components/ui/ primitivos shadcn
+src/pages/                dumb pages: sin estado ni fetch directos; lo asíncrono va en hooks de features/
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Features actuales: `auth` (F1: login, cambio de contraseña, sesión, gating por perfil + guard de
+cambio forzado), `users` y `profiles` (F3: consolas de administración).
+
+## Comandos
+
+```bash
+npm install
+npm run codegen      # genera tipos TS + Zod desde ../backend/schema.yml — correr antes de dev
+npm run dev
+```
+
+Gates de calidad (todos deben pasar antes de declarar una tarea completa):
+
+```bash
+npm run lint         # eslint
+npm run typecheck    # tsc -b
+npm test             # vitest (un archivo: npx vitest run ruta/al/archivo.test.ts)
+npm audit --audit-level=moderate
+npx playwright test  # E2E + WebKit (Safari iOS)
+```
