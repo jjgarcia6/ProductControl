@@ -15,6 +15,7 @@ from typing import TypedDict
 
 # --- Módulos -----------------------------------------------------------------
 MODULE_ACCESS_CONTROL = "access-control"
+MODULE_DIRECTORY = "directory"  # F4: gestión del Directorio (fichas de tercero)
 
 # --- Acciones ----------------------------------------------------------------
 ACTION_READ = "read"
@@ -26,6 +27,7 @@ ACTION_DELETE = "delete"
 # perfiles/identidad; las fases siguientes añaden los suyos.
 PERMISSION_CATALOG: dict[str, frozenset[str]] = {
     MODULE_ACCESS_CONTROL: frozenset({ACTION_READ, ACTION_CREATE, ACTION_UPDATE}),
+    MODULE_DIRECTORY: frozenset({ACTION_READ, ACTION_CREATE, ACTION_UPDATE}),
 }
 
 # Registro de campos sensibles, como claves "recurso.campo". F2 entrega el MECANISMO;
