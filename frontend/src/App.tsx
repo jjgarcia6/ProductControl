@@ -29,6 +29,9 @@ const UsersAdminPage = lazy(() =>
 const ProfilesAdminPage = lazy(() =>
   import('@/pages/ProfilesAdminPage').then((m) => ({ default: m.ProfilesAdminPage })),
 )
+const DirectoryPage = lazy(() =>
+  import('@/pages/DirectoryPage').then((m) => ({ default: m.DirectoryPage })),
+)
 
 function RouteFallback() {
   return (
@@ -96,6 +99,16 @@ function App() {
                   <Authenticated key="admin-profiles" redirectOnFail="/login" loading={<RouteFallback />}>
                     <ForcePasswordChangeGuard>
                       <ProfilesAdminPage />
+                    </ForcePasswordChangeGuard>
+                  </Authenticated>
+                }
+              />
+              <Route
+                path="/directory"
+                element={
+                  <Authenticated key="directory" redirectOnFail="/login" loading={<RouteFallback />}>
+                    <ForcePasswordChangeGuard>
+                      <DirectoryPage />
                     </ForcePasswordChangeGuard>
                   </Authenticated>
                 }

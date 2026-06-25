@@ -30,6 +30,11 @@ El trabajo avanza por fases (ver `documents/PLAN_DE_FASES.md`). Entregadas hasta
 - **F3 · user-management** — consola de administración (solo Jefe): CRUD de usuarios, **reset
   administrativo** con contraseña temporal y **cambio forzado** en el primer acceso, desactivación
   que invalida la sesión, y administración de perfiles (editar permisos / baja con soft delete).
+- **F4 · directory + credit** — Directorio de terceros: fichas con **identificación ecuatoriana
+  validada** (cédula/RUC con dígito verificador, pasaporte), **roles múltiples**
+  (cliente/proveedor/responsable de ruta/chofer), máquina de estados (activo/bloqueado/baja con
+  reactivación) y vínculo opcional 1‑a‑1 con un usuario. Incluye **términos de crédito por faceta**
+  (límite, plazo y aviso) con integridad faceta↔rol.
 
 ## Arranque local — Backend
 

@@ -91,6 +91,83 @@ const PatchedProfileAdminWrite = z
   .partial()
   .passthrough();
 const AssignProfile = z.object({ profile_id: z.string().uuid() }).passthrough();
+const FacetEnum = z.enum(["CLIENTE", "PROVEEDOR"]);
+const CreditTermsWrite = z
+  .object({
+    ficha: z.string().uuid(),
+    facet: FacetEnum,
+    credit_limit: z.string().regex(/^-?\d{0,10}(?:\.\d{0,2})?$/),
+    term_days: z.number().int().gte(0).lte(2147483647).optional(),
+    notice_days: z.number().int().gte(0).lte(2147483647).optional(),
+  })
+  .passthrough();
+const CreditTermsRead = z
+  .object({
+    id: z.string().uuid(),
+    ficha: z.string().uuid(),
+    facet: FacetEnum,
+    credit_limit: z.string().regex(/^-?\d{0,10}(?:\.\d{0,2})?$/),
+    term_days: z.number().int(),
+    notice_days: z.number().int(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough();
+const PatchedCreditTermsWrite = z
+  .object({
+    ficha: z.string().uuid(),
+    facet: FacetEnum,
+    credit_limit: z.string().regex(/^-?\d{0,10}(?:\.\d{0,2})?$/),
+    term_days: z.number().int().gte(0).lte(2147483647),
+    notice_days: z.number().int().gte(0).lte(2147483647),
+  })
+  .partial()
+  .passthrough();
+const IdentificationTypeEnum = z.enum(["CEDULA", "RUC", "PASAPORTE"]);
+const RolesEnum = z.enum([
+  "CLIENTE",
+  "PROVEEDOR",
+  "RESPONSABLE_RUTA",
+  "CHOFER",
+]);
+const StatusEnum = z.enum(["ACTIVO", "BLOQUEADO", "INACTIVO"]);
+const FichaRead = z
+  .object({
+    id: z.string().uuid(),
+    name: z.string(),
+    identification_type: IdentificationTypeEnum,
+    identification_number: z.string(),
+    email: z.string().email(),
+    phone: z.string(),
+    roles: z.array(RolesEnum),
+    status: StatusEnum,
+    user: z.number().int().nullable(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough();
+const FichaWrite = z
+  .object({
+    name: z.string().max(255),
+    identification_type: IdentificationTypeEnum,
+    identification_number: z.string().max(20),
+    email: z.string().max(254).email().optional(),
+    phone: z.string().max(20).optional(),
+    roles: z.array(RolesEnum),
+  })
+  .passthrough();
+const PatchedFichaWrite = z
+  .object({
+    name: z.string().max(255),
+    identification_type: IdentificationTypeEnum,
+    identification_number: z.string().max(20),
+    email: z.string().max(254).email(),
+    phone: z.string().max(20),
+    roles: z.array(RolesEnum),
+  })
+  .partial()
+  .passthrough();
+const LinkUserWrite = z.object({ user: z.number().int() }).passthrough();
 
 export const schemas = {
   ChangePassword,
@@ -109,4 +186,15 @@ export const schemas = {
   ProfileWrite,
   PatchedProfileAdminWrite,
   AssignProfile,
+  FacetEnum,
+  CreditTermsWrite,
+  CreditTermsRead,
+  PatchedCreditTermsWrite,
+  IdentificationTypeEnum,
+  RolesEnum,
+  StatusEnum,
+  FichaRead,
+  FichaWrite,
+  PatchedFichaWrite,
+  LinkUserWrite,
 };

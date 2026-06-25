@@ -241,6 +241,161 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/credit/terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description `POST /credit/terms` — crea términos de crédito para una (ficha, faceta). */
+        post: operations["credit_terms_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/credit/terms/{terms_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description `PATCH /credit/terms/{id}` — edita términos de crédito existentes. */
+        patch: operations["credit_terms_partial_update"];
+        trace?: never;
+    };
+    "/directory/fichas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET /directory/fichas` (listado con filtros) y `POST /directory/fichas` (alta). */
+        get: operations["directory_fichas_list"];
+        put?: never;
+        /** @description `GET /directory/fichas` (listado con filtros) y `POST /directory/fichas` (alta). */
+        post: operations["directory_fichas_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/directory/fichas/{ficha_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET` (lectura) y `PATCH` (edición de datos no-estado) de una ficha por id. */
+        get: operations["directory_fichas_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description `GET` (lectura) y `PATCH` (edición de datos no-estado) de una ficha por id. */
+        patch: operations["directory_fichas_partial_update"];
+        trace?: never;
+    };
+    "/directory/fichas/{ficha_id}/block": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Transición de estado de una ficha. La acción concreta llega por `as_view(action=...)`. */
+        post: operations["directory_fichas_block_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/directory/fichas/{ficha_id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Transición de estado de una ficha. La acción concreta llega por `as_view(action=...)`. */
+        post: operations["directory_fichas_deactivate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/directory/fichas/{ficha_id}/link-user": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description `POST /directory/fichas/{id}/link-user` — vincula la ficha a un usuario (1:1). */
+        post: operations["directory_fichas_link_user_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/directory/fichas/{ficha_id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Transición de estado de una ficha. La acción concreta llega por `as_view(action=...)`. */
+        post: operations["directory_fichas_reactivate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/directory/fichas/{ficha_id}/unblock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Transición de estado de una ficha. La acción concreta llega por `as_view(action=...)`. */
+        post: operations["directory_fichas_unblock_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -265,10 +420,146 @@ export interface components {
             /** @description Nueva contraseña. Debe cumplir la política de contraseñas de Django. */
             new_password: string;
         };
+        /** @description Contrato de lectura de los términos de crédito. */
+        CreditTermsRead: {
+            /** Format: uuid */
+            readonly id: string;
+            /**
+             * Format: uuid
+             * @description Ficha a la que aplican los términos.
+             */
+            readonly ficha: string;
+            /**
+             * @description Faceta a la que aplican los términos: CLIENTE o PROVEEDOR.
+             *
+             *     * `CLIENTE` - Cliente
+             *     * `PROVEEDOR` - Proveedor
+             */
+            readonly facet: components["schemas"]["FacetEnum"];
+            /**
+             * Format: decimal
+             * @description Límite de crédito (≥0).
+             */
+            readonly credit_limit: string;
+            /** @description Plazo de crédito en días (≥0). */
+            readonly term_days: number;
+            /** @description Días de aviso previo al vencimiento (≥0). */
+            readonly notice_days: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /** @description Entrada de creación/edición de términos. La integridad faceta↔rol la valida el service. */
+        CreditTermsWrite: {
+            /**
+             * Format: uuid
+             * @description Ficha a la que aplican los términos.
+             */
+            ficha: string;
+            /**
+             * @description Faceta a la que aplican los términos: CLIENTE o PROVEEDOR.
+             *
+             *     * `CLIENTE` - Cliente
+             *     * `PROVEEDOR` - Proveedor
+             */
+            facet: components["schemas"]["FacetEnum"];
+            /**
+             * Format: decimal
+             * @description Límite de crédito (≥0).
+             */
+            credit_limit: string;
+            /** @description Plazo de crédito en días (≥0). */
+            term_days?: number;
+            /** @description Días de aviso previo al vencimiento (≥0). */
+            notice_days?: number;
+        };
         /** @description Mensaje único en español. Forma del contrato de errores y de los avisos 200. */
         Detail: {
             /** @description Mensaje para el usuario. */
             readonly detail: string;
+        };
+        /**
+         * @description * `CLIENTE` - Cliente
+         *     * `PROVEEDOR` - Proveedor
+         * @enum {string}
+         */
+        FacetEnum: "CLIENTE" | "PROVEEDOR";
+        /** @description Contrato de lectura de una ficha. */
+        FichaRead: {
+            /** Format: uuid */
+            readonly id: string;
+            /** @description Nombre o razón social del tercero. */
+            readonly name: string;
+            /**
+             * @description Tipo de identificación: CEDULA, RUC o PASAPORTE.
+             *
+             *     * `CEDULA` - Cédula
+             *     * `RUC` - RUC
+             *     * `PASAPORTE` - Pasaporte
+             */
+            readonly identification_type: components["schemas"]["IdentificationTypeEnum"];
+            /** @description Número de identificación validado por dígito verificador (pasaporte sin checksum). */
+            readonly identification_number: string;
+            /**
+             * Format: email
+             * @description Correo de contacto (opcional).
+             */
+            readonly email: string;
+            /** @description Teléfono o WhatsApp de contacto (opcional). */
+            readonly phone: string;
+            /** @description Roles del tercero: ≥1 de CLIENTE/PROVEEDOR/RESPONSABLE_RUTA/CHOFER. */
+            readonly roles: components["schemas"]["RolesEnum"][];
+            /**
+             * @description Estado de la ficha. Cambia por acciones explícitas, no por edición directa.
+             *
+             *     * `ACTIVO` - Activo
+             *     * `BLOQUEADO` - Bloqueado
+             *     * `INACTIVO` - Inactivo
+             */
+            readonly status: components["schemas"]["StatusEnum"];
+            /** @description Usuario del sistema vinculado a la ficha (1:1, opcional). */
+            readonly user: number | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /** @description Entrada de alta/edición de ficha. NO acepta `status` ni `user` (cambian por acciones). */
+        FichaWrite: {
+            /** @description Nombre o razón social del tercero. */
+            name: string;
+            /**
+             * @description Tipo de identificación: CEDULA, RUC o PASAPORTE.
+             *
+             *     * `CEDULA` - Cédula
+             *     * `RUC` - RUC
+             *     * `PASAPORTE` - Pasaporte
+             */
+            identification_type: components["schemas"]["IdentificationTypeEnum"];
+            /** @description Número de identificación validado por dígito verificador (pasaporte sin checksum). */
+            identification_number: string;
+            /**
+             * Format: email
+             * @description Correo de contacto (opcional).
+             */
+            email?: string;
+            /** @description Teléfono o WhatsApp de contacto (opcional). */
+            phone?: string;
+            /** @description Roles del tercero: ≥1 de CLIENTE/PROVEEDOR/RESPONSABLE_RUTA/CHOFER. */
+            roles: components["schemas"]["RolesEnum"][];
+        };
+        /**
+         * @description * `CEDULA` - Cédula
+         *     * `RUC` - RUC
+         *     * `PASAPORTE` - Pasaporte
+         * @enum {string}
+         */
+        IdentificationTypeEnum: "CEDULA" | "RUC" | "PASAPORTE";
+        /** @description Entrada de la acción link-user: el usuario a vincular (1:1). */
+        LinkUserWrite: {
+            /** @description Id del usuario del sistema a vincular con la ficha. */
+            user: number;
         };
         /** @description Credenciales de entrada del login. */
         Login: {
@@ -276,6 +567,54 @@ export interface components {
             username: string;
             /** @description Contraseña del usuario. */
             password: string;
+        };
+        /** @description Entrada de creación/edición de términos. La integridad faceta↔rol la valida el service. */
+        PatchedCreditTermsWrite: {
+            /**
+             * Format: uuid
+             * @description Ficha a la que aplican los términos.
+             */
+            ficha?: string;
+            /**
+             * @description Faceta a la que aplican los términos: CLIENTE o PROVEEDOR.
+             *
+             *     * `CLIENTE` - Cliente
+             *     * `PROVEEDOR` - Proveedor
+             */
+            facet?: components["schemas"]["FacetEnum"];
+            /**
+             * Format: decimal
+             * @description Límite de crédito (≥0).
+             */
+            credit_limit?: string;
+            /** @description Plazo de crédito en días (≥0). */
+            term_days?: number;
+            /** @description Días de aviso previo al vencimiento (≥0). */
+            notice_days?: number;
+        };
+        /** @description Entrada de alta/edición de ficha. NO acepta `status` ni `user` (cambian por acciones). */
+        PatchedFichaWrite: {
+            /** @description Nombre o razón social del tercero. */
+            name?: string;
+            /**
+             * @description Tipo de identificación: CEDULA, RUC o PASAPORTE.
+             *
+             *     * `CEDULA` - Cédula
+             *     * `RUC` - RUC
+             *     * `PASAPORTE` - Pasaporte
+             */
+            identification_type?: components["schemas"]["IdentificationTypeEnum"];
+            /** @description Número de identificación validado por dígito verificador (pasaporte sin checksum). */
+            identification_number?: string;
+            /**
+             * Format: email
+             * @description Correo de contacto (opcional).
+             */
+            email?: string;
+            /** @description Teléfono o WhatsApp de contacto (opcional). */
+            phone?: string;
+            /** @description Roles del tercero: ≥1 de CLIENTE/PROVEEDOR/RESPONSABLE_RUTA/CHOFER. */
+            roles?: components["schemas"]["RolesEnum"][];
         };
         /**
          * @description Edición de un perfil (F3): permisos, campos visibles, descripción y flags.
@@ -357,6 +696,21 @@ export interface components {
          * @enum {string}
          */
         RoleEnum: "JEFE" | "SUPERVISOR" | "RUTA" | "USUARIO";
+        /**
+         * @description * `CLIENTE` - Cliente
+         *     * `PROVEEDOR` - Proveedor
+         *     * `RESPONSABLE_RUTA` - Responsable de ruta
+         *     * `CHOFER` - Chofer
+         * @enum {string}
+         */
+        RolesEnum: "CLIENTE" | "PROVEEDOR" | "RESPONSABLE_RUTA" | "CHOFER";
+        /**
+         * @description * `ACTIVO` - Activo
+         *     * `BLOQUEADO` - Bloqueado
+         *     * `INACTIVO` - Inactivo
+         * @enum {string}
+         */
+        StatusEnum: "ACTIVO" | "BLOQUEADO" | "INACTIVO";
         /**
          * @description Respuesta del login: access en el cuerpo + identidad embebida.
          *
@@ -1093,6 +1447,525 @@ export interface operations {
                 };
             };
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    credit_terms_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreditTermsWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["CreditTermsWrite"];
+                "multipart/form-data": components["schemas"]["CreditTermsWrite"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditTermsRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    credit_terms_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                terms_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedCreditTermsWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedCreditTermsWrite"];
+                "multipart/form-data": components["schemas"]["PatchedCreditTermsWrite"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditTermsRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    directory_fichas_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FichaRead"][];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    directory_fichas_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FichaWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["FichaWrite"];
+                "multipart/form-data": components["schemas"]["FichaWrite"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FichaRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    directory_fichas_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ficha_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FichaRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    directory_fichas_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ficha_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedFichaWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedFichaWrite"];
+                "multipart/form-data": components["schemas"]["PatchedFichaWrite"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FichaRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    directory_fichas_block_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ficha_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FichaRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    directory_fichas_deactivate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ficha_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FichaRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    directory_fichas_link_user_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ficha_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkUserWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["LinkUserWrite"];
+                "multipart/form-data": components["schemas"]["LinkUserWrite"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FichaRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    directory_fichas_reactivate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ficha_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FichaRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    directory_fichas_unblock_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ficha_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FichaRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

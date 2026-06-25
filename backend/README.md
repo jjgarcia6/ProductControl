@@ -55,3 +55,33 @@ Consola de administración restringida al **Jefe** (resuelto server-side por el 
 - **Autorización:** los endpoints admin **reutilizan** el módulo `access-control` (`read/create/update`),
   sin tocar el catálogo ni el seed de F2 (KISS). La baja de perfil mapea a `update` (cambio de estado).
 - **Sin variables de entorno nuevas.**
+
+## Directorio y crédito (F4 · add-directory)
+
+Maestro de terceros (`apps/directory`) y sus términos de crédito (`apps/credit`). Lógica en
+`services/` bajo `@audit` + `transaction.atomic()`; errores por el contrato uniforme (400 `{campo:
+[mensajes]}`, 409 `{detail}`). Autorizado por el módulo **`directory`** del catálogo de F2
+(`read`/`create`/`update`); 403 `{detail}` al denegar.
+
+- **Validación de identificación** (`apps/common/validations.py`, **funciones puras** sin ORM): enruta
+  por tipo y dígito verificador — cédula y **RUC natural** por módulo 10; **sociedad privada** (3er
+  dígito 9) y **público** (3er dígito 6) por módulo 11; **pasaporte** sin checksum. La validación es
+  efectiva **server-side** (el Zod del frontend solo valida formato).
+- **Ficha** (`apps/directory`, prefijo `/directory`):
+  - `GET/POST /directory/fichas` — listar (filtros `?role=` y `?status=`; **excluye INACTIVO** salvo
+    `?include_inactive=true`) / crear. Identificación inválida → 400; **duplicada → 409**; sin rol → 400.
+  - `PATCH /directory/fichas/{id}` — editar datos y roles (≥1).
+  - `POST /directory/fichas/{id}/{block|unblock|deactivate|reactivate}` — máquina de estados
+    (ACTIVO↔BLOQUEADO; ACTIVO/BLOQUEADO→INACTIVO; INACTIVO→ACTIVO). Transición inválida → 409.
+  - `POST /directory/fichas/{id}/link-user` — vínculo opcional **1‑a‑1** con un `accounts.User`
+    (`OneToOne`, `on_delete=SET_NULL`); usuario que ya tiene ficha → 409.
+  - Modelo `Ficha`: hereda `TimeStampedModel`, **no** `SoftDeleteModel` — **soft delete clase 3**
+    (estado INACTIVO, nunca `deleted_at`). `UniqueConstraint` **parcial** del número
+    (`condition=~Q(status="INACTIVO")`) + `GinIndex` sobre `roles` (`ArrayField`).
+- **Términos de crédito** (`apps/credit`, prefijo `/credit`):
+  - `POST /credit/terms` · `PATCH /credit/terms/{id}` — `credit_limit` (**`DecimalField`**, nunca float),
+    `term_days`, `notice_days` (default 2), únicos por **(ficha, faceta)** → duplicado **409**.
+  - **Integridad faceta↔rol:** una faceta CLIENTE/PROVEEDOR exige que la ficha tenga ese rol → si no, 400.
+- **Las uniqueness las gobiernan los services** (devuelven 409): se removieron el `UniqueValidator` y el
+  `UniqueTogetherValidator` que DRF deriva automáticamente de los constraints, para no degradar a 400.
+- **Sin variables de entorno nuevas.** Migraciones: `directory/0001_initial`, `credit/0001_initial`.

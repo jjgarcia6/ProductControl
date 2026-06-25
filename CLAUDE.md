@@ -114,6 +114,18 @@ está protegida; todo cambio entra por Pull Request con el pipeline verde. La CI
   para sincronizar `role` + blacklist. La autorización **reutiliza** el módulo `access-control`
   (read/create/update), sin tocar el seed. 409 vía `Conflict` en `apps/common/exceptions.py`. Eventos de
   seguridad auditados con `@audit`.
+- **Directorio y crédito (F4 — apps `directory` + `credit`):** maestro de terceros. `Ficha` (hereda
+  `TimeStampedModel`, **no** `SoftDeleteModel` — **soft delete clase 3**: estado INACTIVO, nunca
+  `deleted_at`) con identificación ecuatoriana validada **server-side** por **funciones puras** en
+  `apps/common/validations.py` (cédula/RUC natural→módulo 10; sociedad privada 3er díg. 9 y público 3er
+  díg. 6→módulo 11; pasaporte sin checksum), `roles` (`ArrayField` + `GinIndex`), máquina de estados
+  (`/directory/fichas/{id}/{block|unblock|deactivate|reactivate}`; transición inválida→409) y vínculo
+  opcional **1‑a‑1** con `accounts.User` (`SET_NULL`; duplicado→409). `UniqueConstraint` **parcial** del
+  número (`condition=~Q(status="INACTIVO")`). `CreditTerms` (`credit/`): `credit_limit` `DecimalField`,
+  único por **(ficha, faceta)** (duplicado→409), con integridad faceta↔rol (CLIENTE/PROVEEDOR→400 si la
+  ficha no tiene el rol). Las uniqueness las gobiernan los **services** (409): se removieron el
+  `UniqueValidator`/`UniqueTogetherValidator` que DRF deriva de los constraints. Autorizado por el módulo
+  `directory` del catálogo de F2 (`read/create/update`), aditivo, sin tocar el seed.
 - **Cloud Run = stateless:** filesystem efímero, escribir SOLO en `/tmp`; sin estado en memoria
   entre requests; sin threads de fondo (tareas vía Cloud Scheduler, no Celery); escuchar en `$PORT`.
 

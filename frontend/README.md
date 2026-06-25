@@ -29,7 +29,15 @@ src/pages/                dumb pages: sin estado ni fetch directos; lo asíncron
 ```
 
 Features actuales: `auth` (F1: login, cambio de contraseña, sesión, gating por perfil + guard de
-cambio forzado), `users` y `profiles` (F3: consolas de administración).
+cambio forzado), `users` y `profiles` (F3: consolas de administración), y `directory` (F4: consola
+del Directorio — listado con filtros rol/estado, formulario de ficha con roles múltiples e
+identificación validada, acciones de estado y sub-formulario de términos de crédito por faceta).
+
+> **Nota sobre `directory`:** las páginas dumb se montan en rutas protegidas con `<Authenticated>` +
+> `ForcePasswordChangeGuard` (esta app no usa `resources`/`accessControlProvider` de Refine; el gating
+> es por `usePermissions().canDo(module, action)`). Los hooks usan `dataProviderName: 'auth'` para que
+> el `authHttpClient` adjunte el Bearer; el `default` no lo hace. El sub-formulario de crédito usa
+> `z.number()` + `valueAsNumber` (no `z.coerce`, que rompe el genérico del resolver en Zod v4).
 
 ## Comandos
 

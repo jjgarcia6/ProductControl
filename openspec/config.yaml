@@ -15,8 +15,16 @@ context: |
 
   ## Convenciones de lenguaje
   - Documentación y lógica de negocio: español.
-  - Código fuente, rutas de API e identificadores técnicos: inglés, incluidos los términos de dominio.
-  - Cada término de dominio MUST usar un único equivalente en inglés, consistente en todo el código y la API (glosario ES->EN a definir y mantener).
+  - Identificadores técnicos en inglés: nombres de clases, funciones, variables, campos, tablas
+    (`db_table`), rutas/endpoints de API y las claves de módulo/acción del catálogo de autorización
+    (kebab-case en inglés, p. ej. `access-control`, `read`/`create`/`update`).
+  - Los VALORES de los enums/choices de dominio (roles, estados, tipos, facetas) se escriben en
+    español en MAYÚSCULAS (convención establecida en F1 y de uso obligatorio para mantener un único
+    equivalente consistente): p. ej. `accounts.Role` = `JEFE/SUPERVISOR/RUTA/USUARIO`; estados de
+    ficha `ACTIVO/BLOQUEADO/INACTIVO`; tipos de identificación `CEDULA/RUC/PASAPORTE`. El `label`
+    legible de cada choice también va en español.
+  - Cada término de dominio MUST usar un único equivalente consistente en todo el código y la API
+    (el español ya elegido para los valores de choices; el inglés para los identificadores técnicos).
   - Estándar de redacción de reglas y requisitos: RFC 2119 con keywords en inglés (MUST, MUST NOT, SHOULD, SHOULD NOT, MAY, REQUIRED).
 
   ## Arquitectura
@@ -127,7 +135,7 @@ context: |
   - Auditoría centralizada: decorador `@audit(action, entity)` en services; NO se repite la
     lógica de logging. Registra fecha/hora, usuario, campo, valor anterior y valor nuevo.
   - Soft delete: por POLÍTICA DE TRES CLASES (ver invariantes), NO global.
-  - Validación de identificación ecuatoriana en `utils/validations.py`: enruta por tipo y dígito.
+  - Validación de identificación ecuatoriana en `apps/common/validations.py`: enruta por tipo y dígito.
     Cédula y RUC de persona natural usan módulo 10; sociedades privadas (3er dígito = 9) y
     sector público (3er dígito = 6) usan módulo 11; pasaporte sin checksum.
 

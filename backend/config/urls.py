@@ -17,6 +17,10 @@ urlpatterns = [
     path("auth/", include("apps.accounts.urls")),
     # Access-control (F2): perfiles y asignación de perfil.
     path("authz/", include("apps.authz.urls")),
+    # Directorio (F4): fichas de tercero.
+    path("directory/", include("apps.directory.urls")),
+    # Crédito (F4): términos de crédito por faceta.
+    path("credit/", include("apps.credit.urls")),
     # OpenAPI: el schema es la fuente de tipos del frontend.
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
