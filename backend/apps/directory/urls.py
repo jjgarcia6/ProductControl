@@ -3,6 +3,7 @@
 from django.urls import path
 
 from .views import (
+    FichaAssignPriceListView,
     FichaDetailView,
     FichaLinkUserView,
     FichaListCreateView,
@@ -38,5 +39,10 @@ urlpatterns = [
         "fichas/<uuid:ficha_id>/link-user",
         FichaLinkUserView.as_view(),
         name="ficha-link-user",
+    ),
+    path(
+        "fichas/<uuid:ficha_id>/assign-price-list",
+        FichaAssignPriceListView.as_view(),
+        name="ficha-assign-price-list",
     ),
 ]

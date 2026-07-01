@@ -41,6 +41,9 @@ const ProductsPage = lazy(() =>
 const UnitsPage = lazy(() =>
   import('@/pages/products/UnitsPage').then((m) => ({ default: m.UnitsPage })),
 )
+const PriceListsPage = lazy(() =>
+  import('@/pages/PriceListsPage').then((m) => ({ default: m.PriceListsPage })),
+)
 
 function RouteFallback() {
   return (
@@ -148,6 +151,16 @@ function App() {
                   <Authenticated key="products-units" redirectOnFail="/login" loading={<RouteFallback />}>
                     <ForcePasswordChangeGuard>
                       <UnitsPage />
+                    </ForcePasswordChangeGuard>
+                  </Authenticated>
+                }
+              />
+              <Route
+                path="/pricing/price-lists"
+                element={
+                  <Authenticated key="pricing-price-lists" redirectOnFail="/login" loading={<RouteFallback />}>
+                    <ForcePasswordChangeGuard>
+                      <PriceListsPage />
                     </ForcePasswordChangeGuard>
                   </Authenticated>
                 }

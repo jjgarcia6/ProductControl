@@ -23,6 +23,8 @@ urlpatterns = [
     path("credit/", include("apps.credit.urls")),
     # Products (F5): maestro de inventario (categorías, productos, unidades).
     path("products/", include("apps.products.urls")),
+    # Pricing (F6): maestro de precios (listas y precios por producto).
+    path("pricing/", include("apps.pricing.urls")),
     # OpenAPI: el schema es la fuente de tipos del frontend.
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

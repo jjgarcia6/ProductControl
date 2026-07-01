@@ -142,6 +142,7 @@ const FichaRead = z
     roles: z.array(RolesEnum),
     status: StatusEnum,
     user: z.number().int().nullable(),
+    price_list: z.string().uuid().nullable(),
     created_at: z.string().datetime({ offset: true }),
     updated_at: z.string().datetime({ offset: true }),
   })
@@ -167,7 +168,52 @@ const PatchedFichaWrite = z
   })
   .partial()
   .passthrough();
+const PatchedAssignPriceList = z
+  .object({ price_list: z.string().uuid().nullable() })
+  .partial()
+  .passthrough();
 const LinkUserWrite = z.object({ user: z.number().int() }).passthrough();
+const PatchedPriceListItemWrite = z
+  .object({
+    product: z.string().uuid(),
+    price: z.string().regex(/^-?\d{0,10}(?:\.\d{0,2})?$/),
+  })
+  .partial()
+  .passthrough();
+const PriceListItemRead = z
+  .object({
+    id: z.string().uuid(),
+    price_list: z.string().uuid(),
+    product: z.string().uuid(),
+    product_name: z.string(),
+    price: z.string().regex(/^-?\d{0,10}(?:\.\d{0,2})?$/),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough();
+const TypeEnum = z.enum(["NORMAL", "DESCARTE"]);
+const PriceListRead = z
+  .object({
+    id: z.string().uuid(),
+    name: z.string(),
+    type: TypeEnum,
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough();
+const PriceListWrite = z
+  .object({ name: z.string().max(120), type: TypeEnum })
+  .passthrough();
+const PatchedPriceListWrite = z
+  .object({ name: z.string().max(120), type: TypeEnum })
+  .partial()
+  .passthrough();
+const PriceListItemWrite = z
+  .object({
+    product: z.string().uuid(),
+    price: z.string().regex(/^-?\d{0,10}(?:\.\d{0,2})?$/),
+  })
+  .passthrough();
 const IntakeTypeEnum = z.enum(["GAVETA", "PESO"]);
 const CategoryRead = z
   .object({
@@ -304,7 +350,15 @@ export const schemas = {
   FichaRead,
   FichaWrite,
   PatchedFichaWrite,
+  PatchedAssignPriceList,
   LinkUserWrite,
+  PatchedPriceListItemWrite,
+  PriceListItemRead,
+  TypeEnum,
+  PriceListRead,
+  PriceListWrite,
+  PatchedPriceListWrite,
+  PriceListItemWrite,
   IntakeTypeEnum,
   CategoryRead,
   CategoryWrite,

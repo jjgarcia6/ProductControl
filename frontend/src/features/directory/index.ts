@@ -7,6 +7,8 @@ export { useFichas } from './hooks/useFichas'
 export { useFichaMutation } from './hooks/useFichaMutation'
 export { useFichaStatus } from './hooks/useFichaStatus'
 export { useCreditTerms } from './hooks/useCreditTerms'
+export { useAssignPriceList } from './hooks/useAssignPriceList'
+export { PriceListSelect } from './components/PriceListSelect'
 export type {
   Ficha,
   FichaWriteInput,

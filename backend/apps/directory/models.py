@@ -75,6 +75,14 @@ class Ficha(TimeStampedModel):
         related_name="ficha",
         help_text="Usuario del sistema vinculado a la ficha (1:1, opcional).",
     )
+    price_list = models.ForeignKey(
+        "pricing.PriceList",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="fichas",
+        help_text="Lista de precios asignada al cliente (opcional; solo fichas con rol CLIENTE).",
+    )
 
     class Meta:
         db_table = "directory_fichas"
