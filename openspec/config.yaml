@@ -152,7 +152,9 @@ context: |
   - FIFO: el despacho consume primero los lotes más antiguos; el sistema los selecciona
     automáticamente. El saldo NUNCA es negativo.
   - Doble costeo en paralelo: costo nominal (peso de factura) y costo efectivo (peso real tras
-    merma), activables de forma independiente.
+    merma). Ambas bases se calculan y persisten SIEMPRE; el toggle de `system-settings` es un
+    filtro de PRESENTACIÓN que decide qué base muestran reportes/dashboards. Al menos una base
+    MUST permanecer activa (no se pueden desactivar ambas).
   - Cuadre al cierre de ruta: peso_ingresado = peso_entregado + merma + peso_sobrante. Si la
     diferencia supera el rango de merma, el sistema bloquea el cierre y exige observación
     justificada + aprobación de supervisor o jefe.

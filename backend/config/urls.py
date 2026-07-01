@@ -27,6 +27,8 @@ urlpatterns = [
     path("pricing/", include("apps.pricing.urls")),
     # Bulk import (F7): importación masiva de maestros (productos, fichas).
     path("bulk-import/", include("apps.bulk_import.urls")),
+    # System settings (F8): parámetros globales (toggles de costeo). Singleton.
+    path("system-settings/", include("apps.system_settings.urls")),
     # OpenAPI: el schema es la fuente de tipos del frontend.
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
