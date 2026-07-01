@@ -339,6 +339,21 @@ const PatchedUnitOfMeasureWrite = z
   })
   .partial()
   .passthrough();
+const SystemSettingsRead = z
+  .object({
+    costing_nominal_enabled: z.boolean(),
+    costing_effective_enabled: z.boolean(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough();
+const PatchedSystemSettingsUpdate = z
+  .object({
+    costing_nominal_enabled: z.boolean(),
+    costing_effective_enabled: z.boolean(),
+  })
+  .partial()
+  .passthrough();
 
 export const schemas = {
   ChangePassword,
@@ -390,4 +405,6 @@ export const schemas = {
   UnitOfMeasureRead,
   UnitOfMeasureWrite,
   PatchedUnitOfMeasureWrite,
+  SystemSettingsRead,
+  PatchedSystemSettingsUpdate,
 };

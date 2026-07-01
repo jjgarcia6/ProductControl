@@ -665,6 +665,24 @@ export interface paths {
         patch: operations["products_units_partial_update"];
         trace?: never;
     };
+    "/system-settings/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET /system-settings` (lectura) y `PATCH /system-settings` (edición) del singleton. */
+        get: operations["system_settings_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description `GET /system-settings` (lectura) y `PATCH /system-settings` (edición) del singleton. */
+        patch: operations["system_settings_partial_update"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1087,6 +1105,13 @@ export interface components {
             /** @description Capacidad de auto-aprobación (estructural en F2). */
             auto_approval?: boolean;
         };
+        /** @description Entrada del `PATCH` parcial de los toggles; rechaza dejar ambas bases en False. */
+        PatchedSystemSettingsUpdate: {
+            /** @description Mostrar la base de costo nominal (peso de factura) en reportes/dashboards. */
+            costing_nominal_enabled?: boolean;
+            /** @description Mostrar la base de costo efectivo (peso real) en reportes/dashboards. */
+            costing_effective_enabled?: boolean;
+        };
         /** @description Entrada de alta/edición de unidad de medida. */
         PatchedUnitOfMeasureWrite: {
             /** @description Nombre de la unidad (único entre vivas; la unicidad la da el service). */
@@ -1299,6 +1324,17 @@ export interface components {
          * @enum {string}
          */
         RowReportStatusEnum: "valid" | "skipped" | "error";
+        /** @description Contrato de lectura del singleton; nunca expone `lock`. */
+        SystemSettingsRead: {
+            /** @description Si los reportes/dashboards muestran la base de costo nominal (peso de factura). */
+            readonly costing_nominal_enabled: boolean;
+            /** @description Si los reportes/dashboards muestran la base de costo efectivo (peso real). */
+            readonly costing_effective_enabled: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
         /**
          * @description Respuesta del login: access en el cuerpo + identidad embebida.
          *
@@ -3866,6 +3902,90 @@ export interface operations {
                 };
             };
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    system_settings_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemSettingsRead"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    system_settings_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSystemSettingsUpdate"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSystemSettingsUpdate"];
+                "multipart/form-data": components["schemas"]["PatchedSystemSettingsUpdate"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemSettingsRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

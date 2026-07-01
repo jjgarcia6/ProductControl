@@ -88,6 +88,7 @@ LOCAL_APPS = [
     "apps.products",
     "apps.pricing",
     "apps.bulk_import",
+    "apps.system_settings",
 ]
 
 # Modelo de usuario propio (accounts.User extiende AbstractUser con `role`).

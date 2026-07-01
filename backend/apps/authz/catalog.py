@@ -19,6 +19,7 @@ MODULE_DIRECTORY = "directory"  # F4: gestión del Directorio (fichas de tercero
 MODULE_PRODUCTS = "products"  # F5: maestro de inventario (categorías, productos, unidades)
 MODULE_PRICING = "pricing"  # F6: maestro de precios (listas y precios por producto)
 MODULE_BULK_IMPORT = "bulk-import"  # F7: importación masiva de maestros (productos, fichas)
+MODULE_SYSTEM_SETTINGS = "system-settings"  # F8: parámetros globales (toggles de costeo)
 
 # --- Acciones ----------------------------------------------------------------
 ACTION_READ = "read"
@@ -35,6 +36,8 @@ PERMISSION_CATALOG: dict[str, frozenset[str]] = {
     MODULE_PRICING: frozenset({ACTION_READ, ACTION_CREATE, ACTION_UPDATE}),
     # La importación masiva solo expone `create` (validar/confirmar/plantilla): no es un CRUD.
     MODULE_BULK_IMPORT: frozenset({ACTION_CREATE}),
+    # Configuración global: leer los toggles de costeo y editarlos (solo el Jefe).
+    MODULE_SYSTEM_SETTINGS: frozenset({ACTION_READ, ACTION_UPDATE}),
 }
 
 # Registro de campos sensibles, como claves "recurso.campo". F2 entrega el MECANISMO;
@@ -60,12 +63,18 @@ class SystemProfileSpec(TypedDict):
 SYSTEM_PROFILES: dict[str, SystemProfileSpec] = {
     "JEFE": {
         "name": "Jefe",
-        "permissions": {MODULE_ACCESS_CONTROL: [ACTION_READ, ACTION_CREATE, ACTION_UPDATE]},
+        "permissions": {
+            MODULE_ACCESS_CONTROL: [ACTION_READ, ACTION_CREATE, ACTION_UPDATE],
+            MODULE_SYSTEM_SETTINGS: [ACTION_READ, ACTION_UPDATE],  # F8
+        },
         "auto_approval": True,
     },
     "SUPERVISOR": {
         "name": "Supervisor",
-        "permissions": {MODULE_ACCESS_CONTROL: [ACTION_READ]},
+        "permissions": {
+            MODULE_ACCESS_CONTROL: [ACTION_READ],
+            MODULE_SYSTEM_SETTINGS: [ACTION_READ],  # F8
+        },
         "auto_approval": False,
     },
     "RUTA": {
