@@ -311,6 +311,23 @@ export interface paths {
         patch: operations["directory_fichas_partial_update"];
         trace?: never;
     };
+    "/directory/fichas/{ficha_id}/assign-price-list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description `PATCH /directory/fichas/{id}/assign-price-list` — asigna una lista de precios (F6). */
+        patch: operations["directory_fichas_assign_price_list_partial_update"];
+        trace?: never;
+    };
     "/directory/fichas/{ficha_id}/block": {
         parameters: {
             query?: never;
@@ -390,6 +407,79 @@ export interface paths {
         put?: never;
         /** @description Transición de estado de una ficha. La acción concreta llega por `as_view(action=...)`. */
         post: operations["directory_fichas_unblock_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pricing/price-list-items/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description `PATCH` (edición del precio) y `DELETE` (quitar de la lista) de un ítem. */
+        delete: operations["pricing_price_list_items_destroy"];
+        options?: never;
+        head?: never;
+        /** @description `PATCH` (edición del precio) y `DELETE` (quitar de la lista) de un ítem. */
+        patch: operations["pricing_price_list_items_partial_update"];
+        trace?: never;
+    };
+    "/pricing/price-lists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET /pricing/price-lists` (listado) y `POST /pricing/price-lists` (alta). */
+        get: operations["pricing_price_lists_list"];
+        put?: never;
+        /** @description `GET /pricing/price-lists` (listado) y `POST /pricing/price-lists` (alta). */
+        post: operations["pricing_price_lists_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pricing/price-lists/{price_list_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET` (lectura), `PATCH` (edición) y `DELETE` (baja lógica) de una lista. */
+        get: operations["pricing_price_lists_retrieve"];
+        put?: never;
+        post?: never;
+        /** @description `GET` (lectura), `PATCH` (edición) y `DELETE` (baja lógica) de una lista. */
+        delete: operations["pricing_price_lists_destroy"];
+        options?: never;
+        head?: never;
+        /** @description `GET` (lectura), `PATCH` (edición) y `DELETE` (baja lógica) de una lista. */
+        patch: operations["pricing_price_lists_partial_update"];
+        trace?: never;
+    };
+    "/pricing/price-lists/{price_list_id}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET /pricing/price-lists/{id}/items` (listado) y `POST` (agregar precio). */
+        get: operations["pricing_price_lists_items_list"];
+        put?: never;
+        /** @description `GET /pricing/price-lists/{id}/items` (listado) y `POST` (agregar precio). */
+        post: operations["pricing_price_lists_items_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -695,6 +785,11 @@ export interface components {
             readonly status: components["schemas"]["StatusEnum"];
             /** @description Usuario del sistema vinculado a la ficha (1:1, opcional). */
             readonly user: number | null;
+            /**
+             * Format: uuid
+             * @description Lista de precios asignada al cliente (opcional; solo fichas con rol CLIENTE).
+             */
+            readonly price_list: string | null;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -748,6 +843,20 @@ export interface components {
             username: string;
             /** @description Contraseña del usuario. */
             password: string;
+        };
+        /**
+         * @description Entrada de la acción assign-price-list: la lista a asignar (F6).
+         *
+         *     Acepta `null` para desasignar. La integridad asignación↔rol cliente la valida el
+         *     service (400 si la ficha no tiene rol CLIENTE); aquí solo se valida el formato y la
+         *     existencia de la lista (FK inexistente -> 400).
+         */
+        PatchedAssignPriceList: {
+            /**
+             * Format: uuid
+             * @description Id de una lista de precios existente, o null para desasignar.
+             */
+            price_list?: string | null;
         };
         /** @description Entrada de alta/edición de categoría. `merma_min`/`merma_max` opcionales (nullable). */
         PatchedCategoryWrite: {
@@ -826,6 +935,31 @@ export interface components {
             /** @description Roles del tercero: ≥1 de CLIENTE/PROVEEDOR/RESPONSABLE_RUTA/CHOFER. */
             roles?: components["schemas"]["RolesEnum"][];
         };
+        /** @description Entrada de alta/edición de un ítem de precio. La FK inexistente se rechaza con 400. */
+        PatchedPriceListItemWrite: {
+            /**
+             * Format: uuid
+             * @description Id de un producto existente.
+             */
+            product?: string;
+            /**
+             * Format: decimal
+             * @description Precio de venta en USD (>= 0).
+             */
+            price?: string;
+        };
+        /** @description Entrada de alta/edición de lista de precios. */
+        PatchedPriceListWrite: {
+            /** @description Nombre de la lista (único entre vivas; la unicidad la da el service). */
+            name?: string;
+            /**
+             * @description Naturaleza de la lista: NORMAL o DESCARTE.
+             *
+             *     * `NORMAL` - Normal
+             *     * `DESCARTE` - Descarte
+             */
+            type?: components["schemas"]["TypeEnum"];
+        };
         /** @description Entrada de alta/edición de producto. Las FK inexistentes se rechazan con 400. */
         PatchedProductWrite: {
             /** @description Nombre del producto (único entre vivos; la unicidad la da el service). */
@@ -877,6 +1011,74 @@ export interface components {
             first_name?: string;
             /** Apellidos */
             last_name?: string;
+        };
+        /** @description Contrato de lectura de un ítem de precio; anida el nombre del producto. */
+        PriceListItemRead: {
+            /** Format: uuid */
+            readonly id: string;
+            /**
+             * Format: uuid
+             * @description Lista a la que pertenece el precio.
+             */
+            readonly price_list: string;
+            /**
+             * Format: uuid
+             * @description Producto tarifado.
+             */
+            readonly product: string;
+            readonly product_name: string;
+            /**
+             * Format: decimal
+             * @description Precio de venta en USD (>= 0).
+             */
+            readonly price: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /** @description Entrada de alta/edición de un ítem de precio. La FK inexistente se rechaza con 400. */
+        PriceListItemWrite: {
+            /**
+             * Format: uuid
+             * @description Id de un producto existente.
+             */
+            product: string;
+            /**
+             * Format: decimal
+             * @description Precio de venta en USD (>= 0).
+             */
+            price: string;
+        };
+        /** @description Contrato de lectura de una lista de precios. */
+        PriceListRead: {
+            /** Format: uuid */
+            readonly id: string;
+            /** @description Nombre visible de la lista. */
+            readonly name: string;
+            /**
+             * @description Naturaleza de la lista: NORMAL o DESCARTE.
+             *
+             *     * `NORMAL` - Normal
+             *     * `DESCARTE` - Descarte
+             */
+            readonly type: components["schemas"]["TypeEnum"];
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /** @description Entrada de alta/edición de lista de precios. */
+        PriceListWrite: {
+            /** @description Nombre de la lista (único entre vivas; la unicidad la da el service). */
+            name: string;
+            /**
+             * @description Naturaleza de la lista: NORMAL o DESCARTE.
+             *
+             *     * `NORMAL` - Normal
+             *     * `DESCARTE` - Descarte
+             */
+            type: components["schemas"]["TypeEnum"];
         };
         /** @description Contrato de lectura de un producto; anida nombres de categoría y unidad. */
         ProductRead: {
@@ -996,6 +1198,12 @@ export interface components {
             readonly access: string;
             readonly user: components["schemas"]["UserIdentity"];
         };
+        /**
+         * @description * `NORMAL` - Normal
+         *     * `DESCARTE` - Descarte
+         * @enum {string}
+         */
+        TypeEnum: "NORMAL" | "DESCARTE";
         /** @description Contrato de lectura de una unidad de medida. */
         UnitOfMeasureRead: {
             /** Format: uuid */
@@ -2041,6 +2249,57 @@ export interface operations {
             };
         };
     };
+    directory_fichas_assign_price_list_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ficha_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedAssignPriceList"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedAssignPriceList"];
+                "multipart/form-data": components["schemas"]["PatchedAssignPriceList"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FichaRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
     directory_fichas_block_create: {
         parameters: {
             query?: never;
@@ -2252,6 +2511,405 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FichaRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    pricing_price_list_items_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    pricing_price_list_items_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedPriceListItemWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedPriceListItemWrite"];
+                "multipart/form-data": components["schemas"]["PatchedPriceListItemWrite"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListItemRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    pricing_price_lists_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListRead"][];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    pricing_price_lists_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriceListWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["PriceListWrite"];
+                "multipart/form-data": components["schemas"]["PriceListWrite"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    pricing_price_lists_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                price_list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    pricing_price_lists_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                price_list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    pricing_price_lists_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                price_list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedPriceListWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedPriceListWrite"];
+                "multipart/form-data": components["schemas"]["PatchedPriceListWrite"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    pricing_price_lists_items_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                price_list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListItemRead"][];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    pricing_price_lists_items_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                price_list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriceListItemWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["PriceListItemWrite"];
+                "multipart/form-data": components["schemas"]["PriceListItemWrite"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListItemRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
                 };
             };
             403: {

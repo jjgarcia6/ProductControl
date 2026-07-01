@@ -14,6 +14,7 @@ from typing import Any
 from rest_framework import serializers
 
 from apps.common.validations import is_valid_identification
+from apps.pricing.models import PriceList
 
 from .models import Ficha, FichaRole
 
@@ -33,6 +34,7 @@ class FichaReadSerializer(serializers.ModelSerializer[Ficha]):
             "roles",
             "status",
             "user",
+            "price_list",
             "created_at",
             "updated_at",
         ]
@@ -92,3 +94,18 @@ class LinkUserWriteSerializer(serializers.Serializer[dict[str, Any]]):
     """Entrada de la acción link-user: el usuario a vincular (1:1)."""
 
     user = serializers.IntegerField(help_text="Id del usuario del sistema a vincular con la ficha.")
+
+
+class AssignPriceListSerializer(serializers.Serializer[dict[str, Any]]):
+    """Entrada de la acción assign-price-list: la lista a asignar (F6).
+
+    Acepta `null` para desasignar. La integridad asignación↔rol cliente la valida el
+    service (400 si la ficha no tiene rol CLIENTE); aquí solo se valida el formato y la
+    existencia de la lista (FK inexistente -> 400).
+    """
+
+    price_list = serializers.PrimaryKeyRelatedField(
+        queryset=PriceList.objects.all(),
+        allow_null=True,
+        help_text="Id de una lista de precios existente, o null para desasignar.",
+    )

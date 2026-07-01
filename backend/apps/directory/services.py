@@ -13,12 +13,14 @@ from __future__ import annotations
 from typing import Any
 
 from django.db import transaction
+from rest_framework import serializers
 
 from apps.accounts.models import User
 from apps.common.audit import audit
 from apps.common.exceptions import Conflict
+from apps.pricing.models import PriceList
 
-from .models import Ficha, FichaStatus
+from .models import Ficha, FichaRole, FichaStatus
 
 # Acción de transición -> (estados de origen permitidos, estado destino).
 _STATUS_TRANSITIONS: dict[str, tuple[tuple[str, ...], str]] = {
@@ -71,6 +73,25 @@ def change_status(*, user: User, ficha: Ficha, action: str) -> Ficha:
             _ensure_unique_identification(ficha.identification_number, exclude_pk=ficha.pk)
         ficha.status = target
         ficha.save(update_fields=["status", "updated_at"])
+    return ficha
+
+
+@audit(action="UPDATE", entity="Ficha")
+def assign_price_list(*, user: User, ficha: Ficha, price_list: PriceList | None) -> Ficha:
+    """Asigna (o desasigna) una lista de precios a la ficha (F6).
+
+    Integridad asignación↔rol: solo una ficha con rol CLIENTE puede tener lista asignada
+    (400 mapeado al campo `price_list` si no lo tiene). Desasignar (`price_list=None`) es
+    siempre válido. Es la 1.ª defensa; el `PROTECT` del FK y la unicidad de baja son las
+    demás.
+    """
+    if price_list is not None and FichaRole.CLIENTE not in ficha.roles:
+        raise serializers.ValidationError(
+            {"price_list": ["Solo una ficha con rol cliente puede tener una lista asignada."]}
+        )
+    with transaction.atomic():
+        ficha.price_list = price_list
+        ficha.save(update_fields=["price_list", "updated_at"])
     return ficha
 
 

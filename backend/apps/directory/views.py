@@ -29,7 +29,12 @@ from apps.authz.permissions import HasModulePermission
 
 from . import services
 from .models import Ficha, FichaStatus
-from .serializers import FichaReadSerializer, FichaWriteSerializer, LinkUserWriteSerializer
+from .serializers import (
+    AssignPriceListSerializer,
+    FichaReadSerializer,
+    FichaWriteSerializer,
+    LinkUserWriteSerializer,
+)
 
 
 def _filtered_fichas(params: dict[str, str]) -> list[Ficha]:
@@ -158,4 +163,31 @@ class FichaLinkUserView(APIView):
         serializer.is_valid(raise_exception=True)
         target = get_object_or_404(User, pk=serializer.validated_data["user"])
         updated = services.link_user(user=cast(User, request.user), ficha=ficha, target=target)
+        return Response(FichaReadSerializer(updated).data, status=200)
+
+
+class FichaAssignPriceListView(APIView):
+    """`PATCH /directory/fichas/{id}/assign-price-list` — asigna una lista de precios (F6)."""
+
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    required_permissions = {"PATCH": (MODULE_DIRECTORY, ACTION_UPDATE)}
+
+    @extend_schema(
+        request=AssignPriceListSerializer,
+        responses={
+            200: FichaReadSerializer,
+            400: DetailSerializer,
+            403: DetailSerializer,
+            404: DetailSerializer,
+        },
+    )
+    def patch(self, request: Request, ficha_id: str) -> Response:
+        ficha = get_object_or_404(Ficha, pk=ficha_id)
+        serializer = AssignPriceListSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        updated = services.assign_price_list(
+            user=cast(User, request.user),
+            ficha=ficha,
+            price_list=serializer.validated_data["price_list"],
+        )
         return Response(FichaReadSerializer(updated).data, status=200)

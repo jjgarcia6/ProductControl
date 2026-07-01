@@ -10,6 +10,7 @@ import pytest
 from apps.accounts.models import Role, User
 from apps.common.models import AuditLog
 from apps.directory.models import Ficha, FichaStatus
+from apps.pricing.models import PriceList, PriceListType
 
 VALID_CEDULA = "1710034065"
 PASSWORD = "Str0ng-Pass!2024"  # noqa: S105 — credencial de prueba, no secreto real
@@ -216,3 +217,57 @@ def test_vincula_usuario_que_ya_tiene_ficha(client, gestor, ficha):
 
     assert response.status_code == 409
     assert otra.user_id == target.id
+
+
+# --- Asignación de lista de precios (F6) --------------------------------------
+
+
+def test_asigna_lista_a_cliente(client, gestor, ficha):
+    client.force_authenticate(gestor)
+    price_list = PriceList.objects.create(name="Mayorista", type=PriceListType.NORMAL)
+
+    response = client.patch(
+        f"/directory/fichas/{ficha.id}/assign-price-list",
+        {"price_list": str(price_list.id)},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    ficha.refresh_from_db()
+    assert ficha.price_list_id == price_list.id
+    assert AuditLog.objects.filter(action="UPDATE", entity="Ficha").exists()
+
+
+def test_asigna_lista_a_ficha_sin_rol_cliente(client, gestor):
+    client.force_authenticate(gestor)
+    price_list = PriceList.objects.create(name="Mayorista", type=PriceListType.NORMAL)
+    proveedor = Ficha.objects.create(
+        name="Solo Proveedor",
+        identification_type="CEDULA",
+        identification_number="0926687856",
+        roles=["PROVEEDOR"],
+    )
+
+    response = client.patch(
+        f"/directory/fichas/{proveedor.id}/assign-price-list",
+        {"price_list": str(price_list.id)},
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert "price_list" in response.data
+    proveedor.refresh_from_db()
+    assert proveedor.price_list_id is None
+
+
+def test_asigna_lista_sin_autorizacion(client, sin_permiso, ficha):
+    client.force_authenticate(sin_permiso)
+    price_list = PriceList.objects.create(name="Mayorista", type=PriceListType.NORMAL)
+
+    response = client.patch(
+        f"/directory/fichas/{ficha.id}/assign-price-list",
+        {"price_list": str(price_list.id)},
+        format="json",
+    )
+
+    assert response.status_code == 403

@@ -17,6 +17,7 @@ from typing import TypedDict
 MODULE_ACCESS_CONTROL = "access-control"
 MODULE_DIRECTORY = "directory"  # F4: gestión del Directorio (fichas de tercero)
 MODULE_PRODUCTS = "products"  # F5: maestro de inventario (categorías, productos, unidades)
+MODULE_PRICING = "pricing"  # F6: maestro de precios (listas y precios por producto)
 
 # --- Acciones ----------------------------------------------------------------
 ACTION_READ = "read"
@@ -30,6 +31,7 @@ PERMISSION_CATALOG: dict[str, frozenset[str]] = {
     MODULE_ACCESS_CONTROL: frozenset({ACTION_READ, ACTION_CREATE, ACTION_UPDATE}),
     MODULE_DIRECTORY: frozenset({ACTION_READ, ACTION_CREATE, ACTION_UPDATE}),
     MODULE_PRODUCTS: frozenset({ACTION_READ, ACTION_CREATE, ACTION_UPDATE}),
+    MODULE_PRICING: frozenset({ACTION_READ, ACTION_CREATE, ACTION_UPDATE}),
 }
 
 # Registro de campos sensibles, como claves "recurso.campo". F2 entrega el MECANISMO;

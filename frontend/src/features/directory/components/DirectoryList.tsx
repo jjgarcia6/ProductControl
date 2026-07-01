@@ -12,6 +12,7 @@ import {
   type FichaStatus,
 } from '../types/directory.types'
 import { FichaForm } from './FichaForm'
+import { PriceListSelect } from './PriceListSelect'
 
 /*
   Consola del Directorio (F4). Contenedor: orquesta el listado con filtros (rol/estado), las
@@ -223,6 +224,11 @@ export function DirectoryList() {
               </button>
             </div>
             <FichaForm ficha={selected} onSaved={() => setSelected(null)} />
+            {selected.roles.includes('CLIENTE') ? (
+              <div className="mt-5 border-t pt-5">
+                <PriceListSelect ficha={selected} />
+              </div>
+            ) : null}
           </section>
         ) : canCreate ? (
           <section aria-label="Nueva ficha" className={cardClass}>

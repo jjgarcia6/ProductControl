@@ -35,6 +35,7 @@ const FICHA = {
   roles: ['CLIENTE', 'PROVEEDOR'],
   status: 'ACTIVO',
   user: null,
+  price_list: null,
   created_at: '2026-06-25T20:00:00Z',
   updated_at: '2026-06-25T20:00:00Z',
 }
