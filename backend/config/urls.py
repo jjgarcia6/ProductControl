@@ -25,6 +25,8 @@ urlpatterns = [
     path("products/", include("apps.products.urls")),
     # Pricing (F6): maestro de precios (listas y precios por producto).
     path("pricing/", include("apps.pricing.urls")),
+    # Bulk import (F7): importación masiva de maestros (productos, fichas).
+    path("bulk-import/", include("apps.bulk_import.urls")),
     # OpenAPI: el schema es la fuente de tipos del frontend.
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
