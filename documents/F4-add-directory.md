@@ -26,7 +26,7 @@ Entregar el Directorio: el registro centralizado de toda entidad externa (client
 - **Estados** ACTIVO → BLOQUEADO → INACTIVO, con INACTIVO **reversible**. Soft delete clase 3 (la baja es el estado, no `deleted_at`).
 - **Vínculo opcional User ↔ Ficha** (1:1).
 - **Términos de crédito por faceta** (`credit`): entidad `CreditTerms` con faceta CLIENTE/PROVEEDOR, límite, plazo en días y días de aviso; a lo sumo uno por (ficha, faceta).
-- **Validadores de identificación ecuatoriana** estrenados en `utils/validations.py`.
+- **Validadores de identificación ecuatoriana** estrenados en `apps/common/validations.py`.
 
 ### Decisiones de modelado (validadas)
 
@@ -158,9 +158,9 @@ El sistema MUST NOT permitir términos de crédito de faceta CLIENTE si la ficha
 
 ## 3) DESIGN → design.md
 
-### Validadores de identificación (`utils/validations.py`)
+### Validadores de identificación (`apps/common/validations.py`)
 
-- Se crea el módulo `utils/validations.py` (según `config.yaml`). Enruta por tipo: cédula y RUC de persona natural por **módulo 10**; sociedades privadas (3er dígito = 9) y sector público (3er dígito = 6) por **módulo 11**; pasaporte sin checksum. Funciones puras, testeables aisladas.
+- Se crea el módulo `apps/common/validations.py` (según `config.yaml`). Enruta por tipo: cédula y RUC de persona natural por **módulo 10**; sociedades privadas (3er dígito = 9) y sector público (3er dígito = 6) por **módulo 11**; pasaporte sin checksum. Funciones puras, testeables aisladas.
 - El serializer de la ficha invoca el validador según el tipo y devuelve el error por campo (contrato uniforme).
 
 ### Capa de datos
@@ -206,7 +206,7 @@ Sin comportamiento de crédito (F21), sin lista de precios (F6), sin la regla de
 > Orden obligatorio del `config.yaml`: Contrato (OpenAPI) → Migraciones Django → Backend (services) → Frontend → Seguridad → Pruebas. Cada tarea nombra el archivo/módulo exacto. Definition of done global: todos los gates del pipeline en verde localmente antes de declarar el change completo.
 
 ### A. Contrato y modelo (OpenAPI + datos)
-- [ ] A.1 Crear `utils/validations.py` con los validadores de cédula/RUC/pasaporte (funciones puras, enrutadas por tipo y dígito verificador).
+- [ ] A.1 Crear `apps/common/validations.py` con los validadores de cédula/RUC/pasaporte (funciones puras, enrutadas por tipo y dígito verificador).
 - [ ] A.2 Crear la app `directory` y el modelo `Ficha` (identificación, roles ArrayField, contacto, status, O2O `user`), con la unicidad parcial del número entre fichas no inactivas y el índice GIN de roles.
 - [ ] A.3 Crear la app `credit` y el modelo `CreditTerms` (ficha, facet, límite, plazo, días de aviso) con `unique(ficha, facet)`.
 - [ ] A.4 Definir serializers de `Ficha` (read/write, con validación de identificación y ≥1 rol) y de `CreditTerms` (con validación faceta↔rol) en sus apps.
@@ -218,7 +218,7 @@ Sin comportamiento de crédito (F21), sin lista de precios (F6), sin la regla de
 - [ ] B.2 `migrate` y verificar arranque limpio.
 
 ### C. Backend (services + vistas)
-- [ ] C.1 Implementar en `apps/directory/services.py` la validación de identificación (vía `utils/validations`), las transiciones de estado (ACTIVO↔BLOQUEADO, →INACTIVO reversible) y el vínculo con usuario.
+- [ ] C.1 Implementar en `apps/directory/services.py` la validación de identificación (vía `apps/common/validations`), las transiciones de estado (ACTIVO↔BLOQUEADO, →INACTIVO reversible) y el vínculo con usuario.
 - [ ] C.2 Implementar en `apps/credit/services.py` la creación/edición de términos con la integridad faceta↔rol y la unicidad por (ficha, faceta).
 - [ ] C.3 Implementar los viewsets delgados de ficha (CRUD + acciones de estado) y de términos de crédito, protegidos por la permission class de F2 (módulo `DIRECTORY`); registrar rutas. Listados excluyen INACTIVO por defecto.
 - [ ] C.4 Verificar que todos los errores salen por el contrato uniforme.
@@ -235,7 +235,7 @@ Sin comportamiento de crédito (F21), sin lista de precios (F6), sin la regla de
 - [ ] E.2 Verificar que las acciones del Directorio respetan los permisos por perfil (F2).
 
 ### F. Pruebas (gate)
-- [ ] F.1 Tests de `utils/validations.py` con casos válidos e inválidos de cédula, RUC (natural, sociedad, público) y pasaporte (funciones puras; cobertura alta).
+- [ ] F.1 Tests de `apps/common/validations.py` con casos válidos e inválidos de cédula, RUC (natural, sociedad, público) y pasaporte (funciones puras; cobertura alta).
 - [ ] F.2 Tests de backend en `apps/directory/tests/` y `apps/credit/tests/` cubriendo todos los Scenarios (identificación válida/inválida/duplicada; roles múltiples/sin rol; email inválido; estados bloquear/reactivar/baja reversible; vínculo usuario; términos por faceta; faceta duplicada → conflicto; integridad faceta↔rol → 400).
 - [ ] F.3 Tests de frontend (Vitest + RTL) del formulario de ficha y del sub-formulario de crédito por faceta.
 - [ ] F.4 Ejecutar y dejar en verde: `ruff`, `mypy --strict`, `bandit`, `pip-audit`, `pytest` (cobertura ≥80%); `eslint`, `tsc`, `npm audit`, `vitest`. Confirmar antes de declarar el change completo.

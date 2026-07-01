@@ -21,6 +21,8 @@ urlpatterns = [
     path("directory/", include("apps.directory.urls")),
     # Crédito (F4): términos de crédito por faceta.
     path("credit/", include("apps.credit.urls")),
+    # Products (F5): maestro de inventario (categorías, productos, unidades).
+    path("products/", include("apps.products.urls")),
     # OpenAPI: el schema es la fuente de tipos del frontend.
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

@@ -61,9 +61,12 @@ context: |
     de servidor (eso lo gestiona Refine).
   - Formularios: React Hook Form + Zod resolver (Zod generado del OpenAPI).
   - UI: Tailwind CSS + shadcn/ui + Lucide React.
-  - Arquitectura UI: feature-driven organizada alrededor de los resources de Refine:
-    `src/features/[feature]/` con `components/`, `hooks/`, `types/`. Lógica compartida entre
-    features en `src/shared/`. Componentes visuales reutilizables en `@/components/custom/`.
+  - Arquitectura UI: feature-driven con `src/features/[feature]/` (`components/`, `hooks/`,
+    `types/`). Las rutas se declaran en `App.tsx` como rutas protegidas (`<Authenticated>` +
+    `ForcePasswordChangeGuard`), NO con un array `resources` de Refine; el gating por perfil se
+    resuelve en componente con `usePermissions().canDo(módulo, acción)`. Refine sigue siendo el
+    dueño del estado de servidor (data hooks). Lógica compartida entre features en `src/shared/`.
+    Componentes visuales reutilizables en `@/components/custom/`.
   - Páginas (`src/pages/`): dumb pages, sin lógica de estado ni llamadas directas a la API;
     lo asíncrono se encapsula en custom hooks dentro de `features/`.
   - Testing: Vitest + React Testing Library (unit/componente) + Playwright (E2E y cross-browser,
@@ -125,8 +128,9 @@ context: |
     Refuerza la regla "no CRUD completo por defecto".
 
   ## Patrones arquitectónicos del backend
-  - Lógica de negocio SOLO en `services/`. Los ViewSets y serializers de DRF son delgados:
-    reciben, validan y delegan.
+  - Lógica de negocio SOLO en `services/`. Las vistas DRF (APIView o ViewSet) y los serializers
+    son delgados: reciben, validan y delegan. El proyecto usa `APIView` por convención establecida
+    (F1–F4): un par list/create + detail por recurso, con `required_permissions` por método.
   - Cálculo financiero (FIFO, costo nominal/efectivo, merma, saldos CxC/CxP) en funciones PURAS
     sin dependencia del ORM, testeables de forma aislada. Esto habilita el gate de cobertura >=90%.
   - Transacciones: toda operación multi-tabla se ejecuta en `transaction.atomic()`, con rollback
