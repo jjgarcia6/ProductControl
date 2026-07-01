@@ -15,7 +15,7 @@ técnicos en **inglés**. Reglas y requisitos se redactan con keywords RFC 2119 
 
 ## Monorepo y contrato inter-app
 
-```
+```text
 backend/    Django 5.2 LTS + DRF — fuente de verdad del contrato OpenAPI. Cloud Run (Docker).
 frontend/   React 19 + Vite + Refine v5 — GENERA tipos TS + Zod desde el OpenAPI. Vercel (sin Docker).
 openspec/   config.yaml (fuente de verdad), schemas, changes, specs.
@@ -78,8 +78,10 @@ está protegida; todo cambio entra por Pull Request con el pipeline verde. La CI
 
 ## Arquitectura del backend
 
-- **Lógica de negocio SOLO en `services/`.** Los ViewSets y serializers de DRF son delgados:
-  reciben, validan y delegan. Estructura por app: `apps/<app>/` con `models.py`, `serializers.py`,
+- **Lógica de negocio SOLO en `services/`.** Las vistas DRF (`APIView` o ViewSet) y los serializers
+  son delgados: reciben, validan y delegan. El proyecto usa `APIView` por convención establecida
+  (F1–F4): un par list/create + detail por recurso, con `required_permissions` por método (resuelto
+  por `HasModulePermission`). Estructura por app: `apps/<app>/` con `models.py`, `serializers.py`,
   `views.py`, `services.py`, `urls.py`, `tests/`. `apps/common/` aloja transversales
   (excepciones, auditoría, modelos base).
 - **Cálculo financiero en funciones puras** sin dependencia del ORM (FIFO, costo nominal/efectivo,
@@ -141,11 +143,13 @@ Directorio se dan de baja con estado INACTIVO.
 
 ## Arquitectura del frontend
 
-- **Feature-driven alrededor de los resources de Refine:** `src/features/<feature>/` con
-  `components/`, `hooks/`, `types/`, `api/`, `providers/`, `store/`. Lógica compartida en
-  `src/shared/`. Componentes visuales reutilizables en `@/components/custom/`; primitivos shadcn en
-  `@/components/ui/`. `src/pages/` son **dumb pages**: sin estado ni llamadas directas a la API —
-  lo asíncrono se encapsula en custom hooks dentro de `features/`.
+- **Feature-driven:** `src/features/<feature>/` con `components/`, `hooks/`, `types/`, `api/`,
+  `providers/`, `store/`. Lógica compartida en `src/shared/`. Componentes visuales reutilizables en
+  `@/components/custom/`; primitivos shadcn en `@/components/ui/`. Las rutas se declaran en `App.tsx`
+  como rutas protegidas (`<Authenticated>` + `ForcePasswordChangeGuard`) con `lazy(() => import(...))`,
+  **NO** con un array `resources` de Refine; el gating por perfil se resuelve en componente con
+  `usePermissions().canDo(módulo, acción)`. `src/pages/` son **dumb pages**: sin estado ni llamadas
+  directas a la API — lo asíncrono se encapsula en custom hooks dentro de `features/`.
 - **Refine v5** gestiona el estado de servidor (React Query vive DENTRO de Refine; MUST NOT montar
   un TanStack Query paralelo). **Zustand SOLO para estado de UI/sesión** (tema, sidebar, filtros);
   nunca para estado de servidor.

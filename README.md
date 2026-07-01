@@ -8,7 +8,7 @@ alimenticios perecibles. Reemplaza controles manuales en hojas de cálculo.
 
 ## Estructura
 
-```
+```text
 backend/    # Django 5.2 LTS + DRF (contenerizado, Cloud Run). Fuente de verdad del OpenAPI.
 frontend/   # React 19 + Vite + Refine (Vercel, sin Docker). Tipos + Zod generados del OpenAPI.
 openspec/   # config.yaml (fuente de verdad), schemas, changes, specs.
@@ -176,6 +176,6 @@ El runbook (§0) pide documentar cualquier desviación y su motivo:
    (`openapi-zod-client@1.18.3`) emite `z.record(value)` (sintaxis Zod v3), pero el proyecto fija
    Zod v4, que exige `z.record(key, value)`. El primer tipo-mapa del contrato (`permissions` de
    access-control) lo destapó; se añadió un paso de pipeline `codegen/fix-zod-v4.mjs` al script
-   `codegen` que reescribe `z.record(` → `z.record(z.string(), ` sobre el `zod.ts` generado (las
+   `codegen` que reescribe `z.record(` → `z.record(z.string(),` sobre el `zod.ts` generado (las
    claves de OpenAPI `additionalProperties` siempre son string). No es edición manual del artefacto;
    revisar cuando el generador soporte Zod v4 de forma nativa.

@@ -78,7 +78,7 @@ class {{ModelName}}(TimeStampedMixin, models.Model):  # + SoftDeleteMixin si es 
 <!-- OCP: Los serializers MUST diseñarse para extenderse sin modificar el serializer base. -->
 <!-- Separar serializers de entrada (write) y salida (read). Nunca el mismo para ambos. -->
 <!-- Usar DecimalField para valores monetarios y pesos. Nunca float. -->
-<!-- El ViewSet/serializer NO contiene lógica de negocio: delega en services/. -->
+<!-- El ViewSet/serializer NO contiene lógica de negocio: delega en services.py. -->
 ```python
 # {{Entity}}WriteSerializer — entrada (validación de escritura)
 # {{Entity}}ReadSerializer  — salida (contrato de lectura)
@@ -121,11 +121,11 @@ class {{Entity}}ReadSerializer(serializers.ModelSerializer):
 <!-- SRP: Un servicio = una responsabilidad de negocio. La lógica vive aquí, no en el ViewSet. -->
 <!-- Los servicios MUST usar `transaction.atomic()` para operaciones multi-tabla. -->
 <!-- Los servicios MUST usar el decorator `@audit(action, entity)` para el audit_log. -->
-<!-- El cálculo financiero (FIFO, costeo, merma) se delega a funciones puras en `utils/` (sin ORM). -->
+<!-- El cálculo financiero (FIFO, costeo, merma) se delega a funciones puras en un módulo propio del app (p. ej. `apps/{{app}}/calculations.py`, al estilo de `apps/common/validations.py`), no en `utils/` ni dentro de `services.py` (sin ORM). -->
 
 | Servicio | Método | Responsabilidad única | Transaccional |
 | :--- | :--- | :--- | :--- |
-| `{{name}}_service.py` | `{{method}}()` | {{Descripción de una sola línea}} | {{Sí/No}} |
+| `services.py` | `{{method}}()` | {{Descripción de una sola línea}} | {{Sí/No}} |
 
 ---
 

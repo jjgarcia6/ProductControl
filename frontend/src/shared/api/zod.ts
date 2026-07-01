@@ -168,6 +168,114 @@ const PatchedFichaWrite = z
   .partial()
   .passthrough();
 const LinkUserWrite = z.object({ user: z.number().int() }).passthrough();
+const IntakeTypeEnum = z.enum(["GAVETA", "PESO"]);
+const CategoryRead = z
+  .object({
+    id: z.string().uuid(),
+    name: z.string(),
+    shelf_life_days: z.number().int(),
+    intake_type: IntakeTypeEnum,
+    merma_min: z
+      .string()
+      .regex(/^-?\d{0,9}(?:\.\d{0,3})?$/)
+      .nullable(),
+    merma_max: z
+      .string()
+      .regex(/^-?\d{0,9}(?:\.\d{0,3})?$/)
+      .nullable(),
+    reference_qty: z.string().regex(/^-?\d{0,9}(?:\.\d{0,3})?$/),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough();
+const CategoryWrite = z
+  .object({
+    name: z.string().max(128),
+    shelf_life_days: z.number().int().gte(0).lte(2147483647).optional(),
+    intake_type: IntakeTypeEnum,
+    merma_min: z
+      .string()
+      .regex(/^-?\d{0,9}(?:\.\d{0,3})?$/)
+      .nullish(),
+    merma_max: z
+      .string()
+      .regex(/^-?\d{0,9}(?:\.\d{0,3})?$/)
+      .nullish(),
+    reference_qty: z
+      .string()
+      .regex(/^-?\d{0,9}(?:\.\d{0,3})?$/)
+      .optional(),
+  })
+  .passthrough();
+const PatchedCategoryWrite = z
+  .object({
+    name: z.string().max(128),
+    shelf_life_days: z.number().int().gte(0).lte(2147483647),
+    intake_type: IntakeTypeEnum,
+    merma_min: z
+      .string()
+      .regex(/^-?\d{0,9}(?:\.\d{0,3})?$/)
+      .nullable(),
+    merma_max: z
+      .string()
+      .regex(/^-?\d{0,9}(?:\.\d{0,3})?$/)
+      .nullable(),
+    reference_qty: z.string().regex(/^-?\d{0,9}(?:\.\d{0,3})?$/),
+  })
+  .partial()
+  .passthrough();
+const ProductRead = z
+  .object({
+    id: z.string().uuid(),
+    name: z.string(),
+    category: z.string().uuid(),
+    category_name: z.string(),
+    unit_of_measure: z.string().uuid(),
+    unit_of_measure_name: z.string(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough();
+const ProductWrite = z
+  .object({
+    name: z.string().max(128),
+    category: z.string().uuid(),
+    unit_of_measure: z.string().uuid(),
+  })
+  .passthrough();
+const PatchedProductWrite = z
+  .object({
+    name: z.string().max(128),
+    category: z.string().uuid(),
+    unit_of_measure: z.string().uuid(),
+  })
+  .partial()
+  .passthrough();
+const UnitOfMeasureRead = z
+  .object({
+    id: z.string().uuid(),
+    name: z.string(),
+    symbol: z.string(),
+    conversion_factor: z.string().regex(/^-?\d{0,6}(?:\.\d{0,6})?$/),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough();
+const UnitOfMeasureWrite = z
+  .object({
+    name: z.string().max(64),
+    symbol: z.string().max(16),
+    conversion_factor: z.string().regex(/^-?\d{0,6}(?:\.\d{0,6})?$/),
+  })
+  .passthrough();
+const PatchedUnitOfMeasureWrite = z
+  .object({
+    name: z.string().max(64),
+    symbol: z.string().max(16),
+    conversion_factor: z.string().regex(/^-?\d{0,6}(?:\.\d{0,6})?$/),
+  })
+  .partial()
+  .passthrough();
 
 export const schemas = {
   ChangePassword,
@@ -197,4 +305,14 @@ export const schemas = {
   FichaWrite,
   PatchedFichaWrite,
   LinkUserWrite,
+  IntakeTypeEnum,
+  CategoryRead,
+  CategoryWrite,
+  PatchedCategoryWrite,
+  ProductRead,
+  ProductWrite,
+  PatchedProductWrite,
+  UnitOfMeasureRead,
+  UnitOfMeasureWrite,
+  PatchedUnitOfMeasureWrite,
 };

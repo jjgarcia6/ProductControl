@@ -311,7 +311,7 @@ Nunca se devuelve al cliente: traceback, nombre de excepción, ruta de archivo, 
 
 ### 6.4 Validación field-level (convención para las fases)
 
-Toda validación de entrada se declara en el **serializer DRF** (backend) y en el **esquema Zod generado** (frontend): tipos numéricos/decimales/texto rechazan entradas inválidas con mensaje específico por campo. Los **validadores de dominio** viven en `utils/validations.py` (según `config.yaml`): enrutan por tipo de identificación y dígito verificador — cédula y RUC de persona natural por módulo 10, sociedades privadas (3er dígito = 9) y sector público (3er dígito = 6) por módulo 11, pasaporte sin checksum. Se estrenan en la fase `add-directory`. Esto no se implementa en el bootstrap; queda como convención que cada fase respeta.
+Toda validación de entrada se declara en el **serializer DRF** (backend) y en el **esquema Zod generado** (frontend): tipos numéricos/decimales/texto rechazan entradas inválidas con mensaje específico por campo. Los **validadores de dominio** viven en `apps/common/validations.py` (según `config.yaml`): enrutan por tipo de identificación y dígito verificador — cédula y RUC de persona natural por módulo 10, sociedades privadas (3er dígito = 9) y sector público (3er dígito = 6) por módulo 11, pasaporte sin checksum. Se estrenan en la fase `add-directory`. Esto no se implementa en el bootstrap; queda como convención que cada fase respeta.
 
 ---
 

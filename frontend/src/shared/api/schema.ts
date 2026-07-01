@@ -396,6 +396,117 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/products/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET /products/categories` (listado) y `POST /products/categories` (alta). */
+        get: operations["products_categories_list"];
+        put?: never;
+        /** @description `GET /products/categories` (listado) y `POST /products/categories` (alta). */
+        post: operations["products_categories_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/categories/{category_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET` (lectura), `PATCH` (edición) y `DELETE` (baja lógica) de una categoría. */
+        get: operations["products_categories_retrieve"];
+        put?: never;
+        post?: never;
+        /** @description `GET` (lectura), `PATCH` (edición) y `DELETE` (baja lógica) de una categoría. */
+        delete: operations["products_categories_destroy"];
+        options?: never;
+        head?: never;
+        /** @description `GET` (lectura), `PATCH` (edición) y `DELETE` (baja lógica) de una categoría. */
+        patch: operations["products_categories_partial_update"];
+        trace?: never;
+    };
+    "/products/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET /products/products` (listado) y `POST /products/products` (alta). */
+        get: operations["products_products_list"];
+        put?: never;
+        /** @description `GET /products/products` (listado) y `POST /products/products` (alta). */
+        post: operations["products_products_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/products/{product_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET` (lectura), `PATCH` (edición) y `DELETE` (baja lógica) de un producto. */
+        get: operations["products_products_retrieve"];
+        put?: never;
+        post?: never;
+        /** @description `GET` (lectura), `PATCH` (edición) y `DELETE` (baja lógica) de un producto. */
+        delete: operations["products_products_destroy"];
+        options?: never;
+        head?: never;
+        /** @description `GET` (lectura), `PATCH` (edición) y `DELETE` (baja lógica) de un producto. */
+        patch: operations["products_products_partial_update"];
+        trace?: never;
+    };
+    "/products/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET /products/units` (listado) y `POST /products/units` (alta). */
+        get: operations["products_units_list"];
+        put?: never;
+        /** @description `GET /products/units` (listado) y `POST /products/units` (alta). */
+        post: operations["products_units_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/units/{unit_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET` (lectura), `PATCH` (edición) y `DELETE` (baja lógica) de una unidad. */
+        get: operations["products_units_retrieve"];
+        put?: never;
+        post?: never;
+        /** @description `GET` (lectura), `PATCH` (edición) y `DELETE` (baja lógica) de una unidad. */
+        delete: operations["products_units_destroy"];
+        options?: never;
+        head?: never;
+        /** @description `GET` (lectura), `PATCH` (edición) y `DELETE` (baja lógica) de una unidad. */
+        patch: operations["products_units_partial_update"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -412,6 +523,70 @@ export interface components {
              * @description Perfil activo a asignar al usuario.
              */
             profile_id: string;
+        };
+        /** @description Contrato de lectura de una categoría. */
+        CategoryRead: {
+            /** Format: uuid */
+            readonly id: string;
+            /** @description Nombre visible de la categoría. */
+            readonly name: string;
+            /** @description Días de caducidad desde el ingreso. */
+            readonly shelf_life_days: number;
+            /**
+             * @description Cómo ingresa el producto al inventario: GAVETA o PESO.
+             *
+             *     * `GAVETA` - Gaveta
+             *     * `PESO` - Peso
+             */
+            readonly intake_type: components["schemas"]["IntakeTypeEnum"];
+            /**
+             * Format: decimal
+             * @description Mínimo del rango de merma proporcional (lb). Nullable hasta definirse.
+             */
+            readonly merma_min: string | null;
+            /**
+             * Format: decimal
+             * @description Máximo del rango de merma proporcional (lb). Nullable hasta definirse.
+             */
+            readonly merma_max: string | null;
+            /**
+             * Format: decimal
+             * @description Cantidad de referencia del rango de merma (lb).
+             */
+            readonly reference_qty: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /** @description Entrada de alta/edición de categoría. `merma_min`/`merma_max` opcionales (nullable). */
+        CategoryWrite: {
+            /** @description Nombre de la categoría (único entre vivas; la unicidad la da el service). */
+            name: string;
+            /** @description Días de caducidad desde el ingreso. */
+            shelf_life_days?: number;
+            /**
+             * @description Tipo de ingreso: GAVETA o PESO.
+             *
+             *     * `GAVETA` - Gaveta
+             *     * `PESO` - Peso
+             */
+            intake_type: components["schemas"]["IntakeTypeEnum"];
+            /**
+             * Format: decimal
+             * @description Mínimo del rango de merma proporcional (lb). Nullable hasta definirse.
+             */
+            merma_min?: string | null;
+            /**
+             * Format: decimal
+             * @description Máximo del rango de merma proporcional (lb). Nullable hasta definirse.
+             */
+            merma_max?: string | null;
+            /**
+             * Format: decimal
+             * @description Cantidad de referencia del rango de merma (lb).
+             */
+            reference_qty?: string;
         };
         /** @description Cambio de la contraseña propia: actual + nueva (valida política de Django). */
         ChangePassword: {
@@ -537,7 +712,7 @@ export interface components {
              *     * `PASAPORTE` - Pasaporte
              */
             identification_type: components["schemas"]["IdentificationTypeEnum"];
-            /** @description Número de identificación validado por dígito verificador (pasaporte sin checksum). */
+            /** @description Número validado por dígito verificador (pasaporte sin checksum). */
             identification_number: string;
             /**
              * Format: email
@@ -556,6 +731,12 @@ export interface components {
          * @enum {string}
          */
         IdentificationTypeEnum: "CEDULA" | "RUC" | "PASAPORTE";
+        /**
+         * @description * `GAVETA` - Gaveta
+         *     * `PESO` - Peso
+         * @enum {string}
+         */
+        IntakeTypeEnum: "GAVETA" | "PESO";
         /** @description Entrada de la acción link-user: el usuario a vincular (1:1). */
         LinkUserWrite: {
             /** @description Id del usuario del sistema a vincular con la ficha. */
@@ -567,6 +748,35 @@ export interface components {
             username: string;
             /** @description Contraseña del usuario. */
             password: string;
+        };
+        /** @description Entrada de alta/edición de categoría. `merma_min`/`merma_max` opcionales (nullable). */
+        PatchedCategoryWrite: {
+            /** @description Nombre de la categoría (único entre vivas; la unicidad la da el service). */
+            name?: string;
+            /** @description Días de caducidad desde el ingreso. */
+            shelf_life_days?: number;
+            /**
+             * @description Tipo de ingreso: GAVETA o PESO.
+             *
+             *     * `GAVETA` - Gaveta
+             *     * `PESO` - Peso
+             */
+            intake_type?: components["schemas"]["IntakeTypeEnum"];
+            /**
+             * Format: decimal
+             * @description Mínimo del rango de merma proporcional (lb). Nullable hasta definirse.
+             */
+            merma_min?: string | null;
+            /**
+             * Format: decimal
+             * @description Máximo del rango de merma proporcional (lb). Nullable hasta definirse.
+             */
+            merma_max?: string | null;
+            /**
+             * Format: decimal
+             * @description Cantidad de referencia del rango de merma (lb).
+             */
+            reference_qty?: string;
         };
         /** @description Entrada de creación/edición de términos. La integridad faceta↔rol la valida el service. */
         PatchedCreditTermsWrite: {
@@ -604,7 +814,7 @@ export interface components {
              *     * `PASAPORTE` - Pasaporte
              */
             identification_type?: components["schemas"]["IdentificationTypeEnum"];
-            /** @description Número de identificación validado por dígito verificador (pasaporte sin checksum). */
+            /** @description Número validado por dígito verificador (pasaporte sin checksum). */
             identification_number?: string;
             /**
              * Format: email
@@ -615,6 +825,21 @@ export interface components {
             phone?: string;
             /** @description Roles del tercero: ≥1 de CLIENTE/PROVEEDOR/RESPONSABLE_RUTA/CHOFER. */
             roles?: components["schemas"]["RolesEnum"][];
+        };
+        /** @description Entrada de alta/edición de producto. Las FK inexistentes se rechazan con 400. */
+        PatchedProductWrite: {
+            /** @description Nombre del producto (único entre vivos; la unicidad la da el service). */
+            name?: string;
+            /**
+             * Format: uuid
+             * @description Id de una categoría existente.
+             */
+            category?: string;
+            /**
+             * Format: uuid
+             * @description Id de una unidad de medida existente.
+             */
+            unit_of_measure?: string;
         };
         /**
          * @description Edición de un perfil (F3): permisos, campos visibles, descripción y flags.
@@ -634,12 +859,62 @@ export interface components {
             /** @description Capacidad de auto-aprobación (estructural en F2). */
             auto_approval?: boolean;
         };
+        /** @description Entrada de alta/edición de unidad de medida. */
+        PatchedUnitOfMeasureWrite: {
+            /** @description Nombre de la unidad (único entre vivas; la unicidad la da el service). */
+            name?: string;
+            /** @description Símbolo corto (p. ej. lb, kg). */
+            symbol?: string;
+            /**
+             * Format: decimal
+             * @description Libras equivalentes a 1 unidad (base = 1). No se aplica en F5.
+             */
+            conversion_factor?: string;
+        };
         /** @description Edición de los datos básicos de un usuario (no toca perfil ni contraseña). */
         PatchedUserAdminUpdate: {
             /** Nombre */
             first_name?: string;
             /** Apellidos */
             last_name?: string;
+        };
+        /** @description Contrato de lectura de un producto; anida nombres de categoría y unidad. */
+        ProductRead: {
+            /** Format: uuid */
+            readonly id: string;
+            /** @description Nombre visible del producto. */
+            readonly name: string;
+            /**
+             * Format: uuid
+             * @description Categoría a la que pertenece el producto.
+             */
+            readonly category: string;
+            readonly category_name: string;
+            /**
+             * Format: uuid
+             * @description Unidad de medida del producto.
+             */
+            readonly unit_of_measure: string;
+            readonly unit_of_measure_name: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /** @description Entrada de alta/edición de producto. Las FK inexistentes se rechazan con 400. */
+        ProductWrite: {
+            /** @description Nombre del producto (único entre vivos; la unicidad la da el service). */
+            name: string;
+            /**
+             * Format: uuid
+             * @description Id de una categoría existente.
+             */
+            category: string;
+            /**
+             * Format: uuid
+             * @description Id de una unidad de medida existente.
+             */
+            unit_of_measure: string;
         };
         /** @description Contrato de lectura de un perfil. */
         ProfileRead: {
@@ -720,6 +995,36 @@ export interface components {
             /** @description Access JWT (vida 15 min). El cliente lo mantiene en memoria. */
             readonly access: string;
             readonly user: components["schemas"]["UserIdentity"];
+        };
+        /** @description Contrato de lectura de una unidad de medida. */
+        UnitOfMeasureRead: {
+            /** Format: uuid */
+            readonly id: string;
+            /** @description Nombre de la unidad (p. ej. Libras). */
+            readonly name: string;
+            /** @description Símbolo corto (p. ej. lb, kg). */
+            readonly symbol: string;
+            /**
+             * Format: decimal
+             * @description Libras equivalentes a 1 unidad (base = 1). No se aplica en F5.
+             */
+            readonly conversion_factor: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /** @description Entrada de alta/edición de unidad de medida. */
+        UnitOfMeasureWrite: {
+            /** @description Nombre de la unidad (único entre vivas; la unicidad la da el service). */
+            name: string;
+            /** @description Símbolo corto (p. ej. lb, kg). */
+            symbol: string;
+            /**
+             * Format: decimal
+             * @description Libras equivalentes a 1 unidad (base = 1). No se aplica en F5.
+             */
+            conversion_factor: string;
         };
         /** @description Contrato de lectura de un usuario en la consola de administración. */
         UserAdminRead: {
@@ -1947,6 +2252,646 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FichaRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_categories_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryRead"][];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_categories_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["CategoryWrite"];
+                "multipart/form-data": components["schemas"]["CategoryWrite"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_categories_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_categories_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_categories_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedCategoryWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedCategoryWrite"];
+                "multipart/form-data": components["schemas"]["PatchedCategoryWrite"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_products_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductRead"][];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_products_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["ProductWrite"];
+                "multipart/form-data": components["schemas"]["ProductWrite"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_products_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_products_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_products_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedProductWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedProductWrite"];
+                "multipart/form-data": components["schemas"]["PatchedProductWrite"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_units_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitOfMeasureRead"][];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_units_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnitOfMeasureWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["UnitOfMeasureWrite"];
+                "multipart/form-data": components["schemas"]["UnitOfMeasureWrite"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitOfMeasureRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_units_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitOfMeasureRead"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_units_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    products_units_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedUnitOfMeasureWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedUnitOfMeasureWrite"];
+                "multipart/form-data": components["schemas"]["PatchedUnitOfMeasureWrite"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitOfMeasureRead"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
                 };
             };
             403: {

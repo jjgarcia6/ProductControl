@@ -35,7 +35,7 @@
 
 ### Lógica de Negocio y API
 <!-- ¿Qué endpoints de DRF se añaden o modifican? (derivados de los flujos de estado, no CRUD por defecto) -->
-<!-- ¿Qué servicios (`services/`) se ven afectados? -->
+<!-- ¿Qué servicios (`services.py`) se ven afectados? -->
 <!-- ¿Se modifica la lógica FIFO, el costeo nominal/efectivo, la merma, el flujo de soft delete, -->
 <!-- la aplicación de cobros (CxC) o pagos a proveedores (CxP)? -->
 

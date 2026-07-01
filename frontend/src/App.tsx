@@ -32,6 +32,15 @@ const ProfilesAdminPage = lazy(() =>
 const DirectoryPage = lazy(() =>
   import('@/pages/DirectoryPage').then((m) => ({ default: m.DirectoryPage })),
 )
+const CategoriesPage = lazy(() =>
+  import('@/pages/products/CategoriesPage').then((m) => ({ default: m.CategoriesPage })),
+)
+const ProductsPage = lazy(() =>
+  import('@/pages/products/ProductsPage').then((m) => ({ default: m.ProductsPage })),
+)
+const UnitsPage = lazy(() =>
+  import('@/pages/products/UnitsPage').then((m) => ({ default: m.UnitsPage })),
+)
 
 function RouteFallback() {
   return (
@@ -109,6 +118,36 @@ function App() {
                   <Authenticated key="directory" redirectOnFail="/login" loading={<RouteFallback />}>
                     <ForcePasswordChangeGuard>
                       <DirectoryPage />
+                    </ForcePasswordChangeGuard>
+                  </Authenticated>
+                }
+              />
+              <Route
+                path="/products/categories"
+                element={
+                  <Authenticated key="products-categories" redirectOnFail="/login" loading={<RouteFallback />}>
+                    <ForcePasswordChangeGuard>
+                      <CategoriesPage />
+                    </ForcePasswordChangeGuard>
+                  </Authenticated>
+                }
+              />
+              <Route
+                path="/products/products"
+                element={
+                  <Authenticated key="products-products" redirectOnFail="/login" loading={<RouteFallback />}>
+                    <ForcePasswordChangeGuard>
+                      <ProductsPage />
+                    </ForcePasswordChangeGuard>
+                  </Authenticated>
+                }
+              />
+              <Route
+                path="/products/units"
+                element={
+                  <Authenticated key="products-units" redirectOnFail="/login" loading={<RouteFallback />}>
+                    <ForcePasswordChangeGuard>
+                      <UnitsPage />
                     </ForcePasswordChangeGuard>
                   </Authenticated>
                 }

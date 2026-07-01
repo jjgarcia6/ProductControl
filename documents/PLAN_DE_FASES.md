@@ -121,7 +121,7 @@ revisar specs/design  → /opsx:apply  → verificar (CI) → /opsx:archive
 - **Depende de:** F1, F2 · **Desbloquea:** F6, F7, F12, F15, F16, F21.
 - **Alcance:** ficha de tercero (identificación con validación de cédula/RUC/pasaporte, contacto, roles múltiples: cliente/proveedor/chofer/responsable de ruta); condiciones comerciales (referencia a lista de precios, plazo de crédito, límite, días de anticipación default 2); estados (ACTIVO → BLOQUEADO → INACTIVO); **vínculo opcional User ↔ Ficha** (FK).
 - **Fuera de alcance:** comportamiento de crédito (vencimiento/bloqueo automático/escalamiento → F21); la asignación efectiva de lista de precios requiere F6.
-- **Invariantes config:** soft delete clase 3 (ficha = estado INACTIVO). Estrena los validadores de identificación ecuatoriana de `utils/validations.py`. Período cerrado N/A (maestro).
+- **Invariantes config:** soft delete clase 3 (ficha = estado INACTIVO). Estrena los validadores de identificación ecuatoriana de `apps/common/validations.py`. Período cerrado N/A (maestro).
 - **Requerimientos:** 3.1–3.4.
 - **Pendiente cliente:** —.
 

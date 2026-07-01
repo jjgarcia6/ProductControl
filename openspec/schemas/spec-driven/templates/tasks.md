@@ -7,7 +7,7 @@
 <!-- DRY: Esta fase es la fuente de verdad compartida. Backend y Frontend dependen de ella. -->
 <!-- DIP: Definir abstracciones (contrato) antes de implementar. -->
 
-- [ ] **0.1** Backend — Crear/actualizar serializers DRF en `backend/{{app}}/serializers/{{modulo}}.py`:
+- [ ] **0.1** Backend — Crear/actualizar serializers DRF en `backend/apps/{{app}}/serializers.py`:
   definir `{{Entity}}WriteSerializer` y `{{Entity}}ReadSerializer` con `help_text=...` en cada campo.
   Usar `DecimalField` para valores monetarios y pesos. Nunca `FloatField`.
 - [ ] **0.2** Backend — Verificar que el OpenAPI expone el contrato (drf-spectacular u equivalente)
@@ -21,7 +21,7 @@
 <!-- SRP: Primero el modelo, luego la migración. No combinar con lógica de negocio. -->
 <!-- Soft delete por política de 3 clases: catálogos heredan SoftDeleteMixin; documentos y Kardex no. -->
 
-- [ ] **1.1** Crear/actualizar modelo Django en `backend/{{app}}/models/{{modulo}}.py`:
+- [ ] **1.1** Crear/actualizar modelo Django en `backend/apps/{{app}}/models.py`:
   heredar de `TimeStampedMixin` (siempre) y de `SoftDeleteMixin` solo si es catálogo/dato maestro;
   definir columnas, tipos, foreign keys (`on_delete` explícito) y relaciones.
   Usar `DecimalField(max_digits, decimal_places)` para valores monetarios y pesos. Nunca `FloatField`.
@@ -37,19 +37,20 @@
 <!-- OCP: Implementar como extensión; no modificar servicios existentes salvo que sea estrictamente necesario. -->
 <!-- SRP: Un servicio = una responsabilidad de negocio. El ViewSet delega, no contiene lógica. -->
 
-- [ ] **2.1** (Si aplica cálculo financiero) Implementar/actualizar la función PURA en
-  `backend/{{app}}/utils/{{nombre}}.py` (FIFO, costo nominal/efectivo, merma, saldos):
-  sin dependencia del ORM, testeable de forma aislada.
-- [ ] **2.2** Crear/modificar el servicio en `backend/{{app}}/services/{{nombre}}_service.py`:
+- [ ] **2.1** (Si aplica cálculo financiero) Implementar/actualizar la función PURA en un módulo
+  propio del app junto a `services.py` —`backend/apps/{{app}}/{{nombre}}.py` (p. ej. `calculations.py`),
+  al estilo de `apps/common/validations.py`/`apps/authz/catalog.py`, no en un `utils/`— para FIFO,
+  costo nominal/efectivo, merma o saldos: sin dependencia del ORM, testeable de forma aislada.
+- [ ] **2.2** Crear/modificar el servicio en `backend/apps/{{app}}/services.py`:
   implementar la lógica con manejo de excepciones tipado (sin capturar `Exception` genérico).
   Usar `transaction.atomic()` para operaciones multi-tabla.
   Aplicar el decorator `@audit(action, entity)` para registrar en `audit_log`.
   Validar período cerrado antes de crear/modificar documentos.
-- [ ] **2.3** Crear/modificar el ViewSet/endpoints en `backend/{{app}}/views/{{nombre}}.py`:
+- [ ] **2.3** Crear/modificar el ViewSet/endpoints en `backend/apps/{{app}}/views.py`:
   integrar el servicio de 2.2; cada endpoint usa los serializers de Fase 0; ViewSet delgado.
   Las transiciones de estado son acciones explícitas (`@action`), no PUT genéricos.
   Aplicar permisos por rol (`{{Jefe|Supervisor|Responsable de ruta|Usuario}}`).
-- [ ] **2.4** Registrar las rutas en `backend/{{app}}/urls.py` con el prefijo `/{{api-prefix}}`.
+- [ ] **2.4** Registrar las rutas en `backend/apps/{{app}}/urls.py` con el prefijo `/{{api-prefix}}`.
 
 ## Fase 3: Integración de Datos (Frontend — Hooks)
 <!-- DIP: Los hooks dependen del contrato de API (Refine), no de detalles del Backend. -->
@@ -85,8 +86,8 @@
 <!-- No negociable. Esta fase no puede eliminarse ni reordenarse. -->
 
 - [ ] **5.1** Backend — Análisis estático en los módulos modificados:
-  `ruff check backend/{{app}}/{{modulo}}/` y `mypy --strict backend/{{app}}/{{modulo}}/`. Corregir todos los errores.
-- [ ] **5.2** Backend — Escaneo de seguridad: `bandit -r backend/{{app}}/{{modulo}}/`.
+  `ruff check backend/apps/{{app}}/` y `mypy --strict backend/apps/{{app}}/`. Corregir todos los errores.
+- [ ] **5.2** Backend — Escaneo de seguridad: `bandit -r backend/apps/{{app}}/`.
   Corregir o documentar toda alerta de severidad MEDIUM o superior.
 - [ ] **5.3** Frontend — `eslint frontend/src/features/{{feature}}/` y `tsc --noEmit`. Corregir todos los errores.
 - [ ] **5.4** Global — Verificar que no hay secretos en el código (credenciales, tokens, connection strings).
@@ -99,14 +100,14 @@
 <!-- DRY: Extraer datos de prueba repetidos a fixtures o factories compartidas. -->
 <!-- Gate de cobertura: >=80% global, >=90% en módulos de cálculo financiero. -->
 
-- [ ] **6.1** Backend — Escribir/actualizar pruebas en `backend/{{app}}/tests/test_{{nombre}}.py`:
+- [ ] **6.1** Backend — Escribir/actualizar pruebas en `backend/apps/{{app}}/tests/test_{{nombre}}.py`:
   - Prueba del contrato JSON para cada endpoint (éxito y error).
   - Prueba de validación de serializer para inputs inválidos (debe retornar `400`).
   - Prueba de rechazo por período cerrado (`409`).
   - Prueba de invariantes de negocio: saldo no negativo, FIFO correcto, cuadre de ruta,
     snapshot inmutable de entrega, nota de crédito vinculada, reversión de efectos.
   - Prueba unitaria de las funciones puras de cálculo financiero (cobertura >=90%).
-  - Ejecutar con `pytest backend/{{app}}/tests/test_{{nombre}}.py -v --cov`.
+  - Ejecutar con `pytest backend/apps/{{app}}/tests/test_{{nombre}}.py -v --cov`.
 - [ ] **6.2** Frontend — Escribir/actualizar pruebas en `frontend/src/features/{{feature}}/components/{{NombreContenedor}}.test.tsx`:
   - Prueba del flujo principal (éxito) y del feedback de error al usuario.
   - Prueba de los estados vacío/carga/error.
