@@ -241,6 +241,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/bulk-import/fichas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description `POST /bulk-import/fichas` — importa fichas del Directorio (dry-run o commit). */
+        post: operations["bulk_import_fichas_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bulk-import/fichas/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET /bulk-import/fichas/template` — plantilla CSV de fichas. */
+        get: operations["bulk_import_fichas_template_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bulk-import/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description `POST /bulk-import/products` — importa productos (dry-run o commit). */
+        post: operations["bulk_import_products_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bulk-import/products/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description `GET /bulk-import/products/template` — plantilla CSV de productos. */
+        get: operations["bulk_import_products_template_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/credit/terms": {
         parameters: {
             query?: never;
@@ -782,7 +850,7 @@ export interface components {
              *     * `BLOQUEADO` - Bloqueado
              *     * `INACTIVO` - Inactivo
              */
-            readonly status: components["schemas"]["StatusEnum"];
+            readonly status: components["schemas"]["FichaReadStatusEnum"];
             /** @description Usuario del sistema vinculado a la ficha (1:1, opcional). */
             readonly user: number | null;
             /**
@@ -795,6 +863,13 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        /**
+         * @description * `ACTIVO` - Activo
+         *     * `BLOQUEADO` - Bloqueado
+         *     * `INACTIVO` - Inactivo
+         * @enum {string}
+         */
+        FichaReadStatusEnum: "ACTIVO" | "BLOQUEADO" | "INACTIVO";
         /** @description Entrada de alta/edición de ficha. NO acepta `status` ni `user` (cambian por acciones). */
         FichaWrite: {
             /** @description Nombre o razón social del tercero. */
@@ -826,6 +901,25 @@ export interface components {
          * @enum {string}
          */
         IdentificationTypeEnum: "CEDULA" | "RUC" | "PASAPORTE";
+        /** @description Resumen de una operación de importación (previsualización o commit). */
+        ImportResult: {
+            /** @description True si fue previsualización (no persiste); False si fue commit. */
+            dry_run: boolean;
+            /** @description Filas insertadas (0 en dry-run). */
+            inserted: number;
+            /** @description Filas omitidas por duplicado. */
+            skipped: number;
+            /** @description Reporte fila por fila. */
+            rows: components["schemas"]["RowReport"][];
+        };
+        /** @description Cuerpo multipart de una importación: el archivo a procesar (documenta el OpenAPI). */
+        ImportUpload: {
+            /**
+             * Format: uri
+             * @description Archivo CSV o Excel (.xlsx) a importar.
+             */
+            file: string;
+        };
         /**
          * @description * `GAVETA` - Gaveta
          *     * `PESO` - Peso
@@ -1181,13 +1275,30 @@ export interface components {
          * @enum {string}
          */
         RolesEnum: "CLIENTE" | "PROVEEDOR" | "RESPONSABLE_RUTA" | "CHOFER";
+        /** @description Reporte de una fila del archivo tras validarla. */
+        RowReport: {
+            /** @description Número de fila en el archivo (la cabecera es la fila 1). */
+            row_number: number;
+            /**
+             * @description Estado de la fila: valid | skipped | error.
+             *
+             *     * `valid` - Válida
+             *     * `skipped` - Omitida por duplicado
+             *     * `error` - Con error de validación
+             */
+            status: components["schemas"]["RowReportStatusEnum"];
+            /** @description Errores por campo (contrato uniforme). Solo presente si status = error. */
+            errors?: {
+                [key: string]: string[];
+            };
+        };
         /**
-         * @description * `ACTIVO` - Activo
-         *     * `BLOQUEADO` - Bloqueado
-         *     * `INACTIVO` - Inactivo
+         * @description * `valid` - Válida
+         *     * `skipped` - Omitida por duplicado
+         *     * `error` - Con error de validación
          * @enum {string}
          */
-        StatusEnum: "ACTIVO" | "BLOQUEADO" | "INACTIVO";
+        RowReportStatusEnum: "valid" | "skipped" | "error";
         /**
          * @description Respuesta del login: access en el cuerpo + identidad embebida.
          *
@@ -1960,6 +2071,192 @@ export interface operations {
                 };
             };
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    bulk_import_fichas_create: {
+        parameters: {
+            query?: {
+                /** @description true = previsualizar sin persistir; ausente/false = confirmar. */
+                dry_run?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["ImportUpload"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    bulk_import_fichas_template_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    bulk_import_products_create: {
+        parameters: {
+            query?: {
+                /** @description true = previsualizar sin persistir; ausente/false = confirmar. */
+                dry_run?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["ImportUpload"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    bulk_import_products_template_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

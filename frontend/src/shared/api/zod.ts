@@ -91,6 +91,23 @@ const PatchedProfileAdminWrite = z
   .partial()
   .passthrough();
 const AssignProfile = z.object({ profile_id: z.string().uuid() }).passthrough();
+const ImportUpload = z.object({ file: z.string().url() }).passthrough();
+const RowReportStatusEnum = z.enum(["valid", "skipped", "error"]);
+const RowReport = z
+  .object({
+    row_number: z.number().int(),
+    status: RowReportStatusEnum,
+    errors: z.record(z.string(), z.array(z.string())).optional(),
+  })
+  .passthrough();
+const ImportResult = z
+  .object({
+    dry_run: z.boolean(),
+    inserted: z.number().int(),
+    skipped: z.number().int(),
+    rows: z.array(RowReport),
+  })
+  .passthrough();
 const FacetEnum = z.enum(["CLIENTE", "PROVEEDOR"]);
 const CreditTermsWrite = z
   .object({
@@ -130,7 +147,7 @@ const RolesEnum = z.enum([
   "RESPONSABLE_RUTA",
   "CHOFER",
 ]);
-const StatusEnum = z.enum(["ACTIVO", "BLOQUEADO", "INACTIVO"]);
+const FichaReadStatusEnum = z.enum(["ACTIVO", "BLOQUEADO", "INACTIVO"]);
 const FichaRead = z
   .object({
     id: z.string().uuid(),
@@ -140,7 +157,7 @@ const FichaRead = z
     email: z.string().email(),
     phone: z.string(),
     roles: z.array(RolesEnum),
-    status: StatusEnum,
+    status: FichaReadStatusEnum,
     user: z.number().int().nullable(),
     price_list: z.string().uuid().nullable(),
     created_at: z.string().datetime({ offset: true }),
@@ -340,13 +357,17 @@ export const schemas = {
   ProfileWrite,
   PatchedProfileAdminWrite,
   AssignProfile,
+  ImportUpload,
+  RowReportStatusEnum,
+  RowReport,
+  ImportResult,
   FacetEnum,
   CreditTermsWrite,
   CreditTermsRead,
   PatchedCreditTermsWrite,
   IdentificationTypeEnum,
   RolesEnum,
-  StatusEnum,
+  FichaReadStatusEnum,
   FichaRead,
   FichaWrite,
   PatchedFichaWrite,

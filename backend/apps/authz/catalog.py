@@ -18,6 +18,7 @@ MODULE_ACCESS_CONTROL = "access-control"
 MODULE_DIRECTORY = "directory"  # F4: gestión del Directorio (fichas de tercero)
 MODULE_PRODUCTS = "products"  # F5: maestro de inventario (categorías, productos, unidades)
 MODULE_PRICING = "pricing"  # F6: maestro de precios (listas y precios por producto)
+MODULE_BULK_IMPORT = "bulk-import"  # F7: importación masiva de maestros (productos, fichas)
 
 # --- Acciones ----------------------------------------------------------------
 ACTION_READ = "read"
@@ -32,6 +33,8 @@ PERMISSION_CATALOG: dict[str, frozenset[str]] = {
     MODULE_DIRECTORY: frozenset({ACTION_READ, ACTION_CREATE, ACTION_UPDATE}),
     MODULE_PRODUCTS: frozenset({ACTION_READ, ACTION_CREATE, ACTION_UPDATE}),
     MODULE_PRICING: frozenset({ACTION_READ, ACTION_CREATE, ACTION_UPDATE}),
+    # La importación masiva solo expone `create` (validar/confirmar/plantilla): no es un CRUD.
+    MODULE_BULK_IMPORT: frozenset({ACTION_CREATE}),
 }
 
 # Registro de campos sensibles, como claves "recurso.campo". F2 entrega el MECANISMO;

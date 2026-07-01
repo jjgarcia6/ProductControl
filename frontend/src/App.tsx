@@ -44,6 +44,9 @@ const UnitsPage = lazy(() =>
 const PriceListsPage = lazy(() =>
   import('@/pages/PriceListsPage').then((m) => ({ default: m.PriceListsPage })),
 )
+const BulkImportPage = lazy(() =>
+  import('@/pages/BulkImportPage').then((m) => ({ default: m.BulkImportPage })),
+)
 
 function RouteFallback() {
   return (
@@ -161,6 +164,16 @@ function App() {
                   <Authenticated key="pricing-price-lists" redirectOnFail="/login" loading={<RouteFallback />}>
                     <ForcePasswordChangeGuard>
                       <PriceListsPage />
+                    </ForcePasswordChangeGuard>
+                  </Authenticated>
+                }
+              />
+              <Route
+                path="/bulk-import"
+                element={
+                  <Authenticated key="bulk-import" redirectOnFail="/login" loading={<RouteFallback />}>
+                    <ForcePasswordChangeGuard>
+                      <BulkImportPage />
                     </ForcePasswordChangeGuard>
                   </Authenticated>
                 }
