@@ -136,8 +136,11 @@ context: |
   - Transacciones: toda operación multi-tabla se ejecuta en `transaction.atomic()`, con rollback
     total si algo falla. Aplica a ingresos (Kardex+CxP+estado), entregas (Kardex+CxC), cobros,
     pagos, despiece y cierre.
-  - Auditoría centralizada: decorador `@audit(action, entity)` en services; NO se repite la
-    lógica de logging. Registra fecha/hora, usuario, campo, valor anterior y valor nuevo.
+  - Auditoría centralizada (apps.common): el decorador `@audit(action, entity)` en services
+    registra el EVENTO de acción (fecha/hora, usuario, acción, entidad, object_id); el helper
+    `record_field_changes` registra el DIFF campo-nivel de correcciones (una fila por campo con
+    valor anterior y valor nuevo). El vocabulario de acciones es `AuditAction`. NO se repite la
+    lógica de logging.
   - Soft delete: por POLÍTICA DE TRES CLASES (ver invariantes), NO global.
   - Validación de identificación ecuatoriana en `apps/common/validations.py`: enruta por tipo y dígito.
     Cédula y RUC de persona natural usan módulo 10; sociedades privadas (3er dígito = 9) y

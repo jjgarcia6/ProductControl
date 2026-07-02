@@ -17,6 +17,7 @@ from rest_framework import serializers
 
 from apps.accounts.models import User
 from apps.common.audit import audit
+from apps.common.audit_rules import AuditAction
 from apps.common.exceptions import Conflict
 from apps.pricing.models import PriceList
 
@@ -40,7 +41,7 @@ def _ensure_unique_identification(number: str, *, exclude_pk: Any = None) -> Non
         raise Conflict("Ya existe una ficha activa con este número de identificación.")
 
 
-@audit(action="CREATE", entity="Ficha")
+@audit(action=AuditAction.CREATE, entity="Ficha")
 def create_ficha(*, user: User, data: dict[str, Any]) -> Ficha:
     """Crea una ficha en estado ACTIVO con identificación única."""
     with transaction.atomic():
@@ -49,7 +50,7 @@ def create_ficha(*, user: User, data: dict[str, Any]) -> Ficha:
     return ficha
 
 
-@audit(action="UPDATE", entity="Ficha")
+@audit(action=AuditAction.UPDATE, entity="Ficha")
 def update_ficha(*, user: User, ficha: Ficha, data: dict[str, Any]) -> Ficha:
     """Edita los datos no-estado de una ficha (no cambia `status` ni `user`)."""
     with transaction.atomic():
@@ -61,7 +62,7 @@ def update_ficha(*, user: User, ficha: Ficha, data: dict[str, Any]) -> Ficha:
     return ficha
 
 
-@audit(action="STATE_CHANGE", entity="Ficha")
+@audit(action=AuditAction.STATE_CHANGE, entity="Ficha")
 def change_status(*, user: User, ficha: Ficha, action: str) -> Ficha:
     """Aplica una transición de estado (block/unblock/deactivate/reactivate)."""
     allowed_from, target = _STATUS_TRANSITIONS[action]
@@ -76,7 +77,7 @@ def change_status(*, user: User, ficha: Ficha, action: str) -> Ficha:
     return ficha
 
 
-@audit(action="UPDATE", entity="Ficha")
+@audit(action=AuditAction.UPDATE, entity="Ficha")
 def assign_price_list(*, user: User, ficha: Ficha, price_list: PriceList | None) -> Ficha:
     """Asigna (o desasigna) una lista de precios a la ficha (F6).
 
@@ -95,7 +96,7 @@ def assign_price_list(*, user: User, ficha: Ficha, price_list: PriceList | None)
     return ficha
 
 
-@audit(action="UPDATE", entity="Ficha")
+@audit(action=AuditAction.UPDATE, entity="Ficha")
 def link_user(*, user: User, ficha: Ficha, target: User) -> Ficha:
     """Vincula la ficha a un usuario en relación 1:1 (409 si el usuario ya tiene ficha)."""
     existing = Ficha.objects.filter(user=target).exclude(pk=ficha.pk).first()

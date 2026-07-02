@@ -15,6 +15,7 @@ from rest_framework.exceptions import ValidationError
 
 from apps.accounts.models import User
 from apps.common.audit import audit
+from apps.common.audit_rules import AuditAction
 from apps.common.exceptions import Conflict
 from apps.directory.models import Ficha, FichaRole
 
@@ -36,7 +37,7 @@ def _ensure_facet_matches_role(ficha: Ficha, facet: str) -> None:
         )
 
 
-@audit(action="CREATE", entity="CreditTerms")
+@audit(action=AuditAction.CREATE, entity="CreditTerms")
 def create_terms(*, user: User, data: dict[str, Any]) -> CreditTerms:
     """Crea los términos de una faceta (409 si ya existen para esa (ficha, faceta))."""
     ficha: Ficha = data["ficha"]
@@ -49,7 +50,7 @@ def create_terms(*, user: User, data: dict[str, Any]) -> CreditTerms:
     return terms
 
 
-@audit(action="UPDATE", entity="CreditTerms")
+@audit(action=AuditAction.UPDATE, entity="CreditTerms")
 def update_terms(*, user: User, terms: CreditTerms, data: dict[str, Any]) -> CreditTerms:
     """Edita términos existentes; revalida faceta↔rol y unicidad si cambia la faceta."""
     new_facet = data.get("facet", terms.facet)

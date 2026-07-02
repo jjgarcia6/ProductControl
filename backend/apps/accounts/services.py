@@ -31,6 +31,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.authz.catalog import role_for_profile_name
 from apps.authz.models import Profile
 from apps.common.audit import audit
+from apps.common.audit_rules import AuditAction
 
 from .models import User
 
@@ -150,7 +151,7 @@ def generate_temporary_password() -> str:
             return candidate
 
 
-@audit(action="CREATE", entity="User")
+@audit(action=AuditAction.CREATE, entity="User")
 def create_user(
     *,
     user: User,
@@ -171,7 +172,7 @@ def create_user(
     return target
 
 
-@audit(action="UPDATE", entity="User")
+@audit(action=AuditAction.UPDATE, entity="User")
 def update_user(*, user: User, target: User, first_name: str, last_name: str) -> User:
     """Edita los datos básicos del usuario. `user` es el actor (auditoría)."""
     with transaction.atomic():
@@ -181,7 +182,7 @@ def update_user(*, user: User, target: User, first_name: str, last_name: str) ->
     return target
 
 
-@audit(action="UPDATE", entity="User")
+@audit(action=AuditAction.UPDATE, entity="User")
 def reset_password(*, user: User, target: User, raw_password: str) -> User:
     """Fija la contraseña temporal, activa el flag de cambio forzado e invalida sesiones.
 
@@ -196,7 +197,7 @@ def reset_password(*, user: User, target: User, raw_password: str) -> User:
     return target
 
 
-@audit(action="UPDATE", entity="User")
+@audit(action=AuditAction.UPDATE, entity="User")
 def deactivate_user(*, user: User, target: User) -> User:
     """Desactiva al usuario e invalida todos sus refresh. `user` es el actor (auditoría)."""
     with transaction.atomic():
@@ -206,7 +207,7 @@ def deactivate_user(*, user: User, target: User) -> User:
     return target
 
 
-@audit(action="UPDATE", entity="User")
+@audit(action=AuditAction.UPDATE, entity="User")
 def reactivate_user(*, user: User, target: User) -> User:
     """Reactiva al usuario. `user` es el actor (auditoría)."""
     with transaction.atomic():

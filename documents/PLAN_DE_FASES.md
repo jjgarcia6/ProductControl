@@ -175,8 +175,8 @@ revisar specs/design  → /opsx:apply  → verificar (CI) → /opsx:archive
 #### Fase 10 — add-audit-rules
 - **Capability:** inicia `audit` (reglas sobre el mecanismo `@audit` del bootstrap).
 - **Depende de:** F1 · **Desbloquea:** F11, F12 (correcciones auditables).
-- **Alcance:** reglas de qué se audita: toda corrección sobre un documento generado registra fecha/hora, usuario, campo, valor anterior y valor nuevo; consulta del log.
-- **Fuera de alcance:** las correcciones específicas (peso/costo) que se conectan en F11/F12.
+- **Alcance:** reglas de qué se audita: mecanismo backend puro (registro declarativo `AUDITED_FIELDS`, vocabulario `AuditAction`, helper `record_field_changes`) para que toda corrección sobre un documento generado registre fecha/hora, usuario, campo, valor anterior y valor nuevo; reconciliación del invariante de auditoría en `config.yaml`.
+- **Fuera de alcance:** la **consulta/lectura del log** (endpoint, UI, permisos) se difiere a una fase posterior — exponer el rastro exige respetar antes la invisibilidad de campos sensibles (2.4), que no es dependencia de F10; las correcciones específicas (peso/costo) se conectan en F11/F12.
 - **Invariantes config:** auditoría de correcciones.
 - **Requerimientos:** 2.3.
 - **Pendiente cliente:** —.
