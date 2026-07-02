@@ -75,13 +75,18 @@ ignore_missing_imports = true
 django_settings_module = "config.settings.dev"
 
 # Pyright/Pylance es el analizador del IDE; el gate autoritativo del pipeline es mypy strict.
-# Django declara una `class Meta` anidada en cada modelo concreto sin heredar la Meta abstracta
-# del padre (TimeStampedModel/SoftDeleteModel); eso dispara reportIncompatibleVariableOverride en
-# TODOS los modelos. Es un falso positivo del patrón de Django, así que se silencia globalmente.
+# Se silencian dos falsos positivos del patrón de Django que Pyright no entiende (no usa el plugin
+# de django-stubs); mypy sí los resuelve:
+#  - reportIncompatibleVariableOverride: cada modelo concreto declara una `class Meta` anidada sin
+#    heredar la Meta abstracta del padre (TimeStampedModel/SoftDeleteModel) -> dispara en TODOS los
+#    modelos.
+#  - reportAttributeAccessIssue: los managers de relación inversa creados por `related_name`
+#    (p. ej. `profile.users`, `user.audit_logs`) no son estáticamente visibles para Pyright.
 [tool.pyright]
 pythonVersion = "3.12"
 exclude = ["**/migrations", ".venv"]
 reportIncompatibleVariableOverride = false
+reportAttributeAccessIssue = false
 
 [tool.bandit]
 # SAST sobre apps/ y config/. Se excluyen tests (assert es esperado) y migraciones.
