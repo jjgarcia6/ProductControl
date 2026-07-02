@@ -20,6 +20,7 @@ from django.db import transaction
 
 from apps.accounts.models import User
 from apps.common.audit import audit
+from apps.common.audit_rules import AuditAction
 from apps.common.exceptions import Conflict
 
 from .models import PriceList, PriceListItem
@@ -37,7 +38,7 @@ def _ensure_unique_price_list_name(name: str, *, exclude_pk: Any = None) -> None
 # --- Lista de precios --------------------------------------------------------
 
 
-@audit(action="CREATE", entity="PriceList")
+@audit(action=AuditAction.CREATE, entity="PriceList")
 def create_price_list(*, user: User, data: dict[str, Any]) -> PriceList:
     """Crea una lista con nombre único entre las vivas (409 si choca)."""
     with transaction.atomic():
@@ -46,7 +47,7 @@ def create_price_list(*, user: User, data: dict[str, Any]) -> PriceList:
     return price_list
 
 
-@audit(action="UPDATE", entity="PriceList")
+@audit(action=AuditAction.UPDATE, entity="PriceList")
 def update_price_list(*, user: User, price_list: PriceList, data: dict[str, Any]) -> PriceList:
     """Edita una lista revalidando la unicidad de nombre (excluye su propio pk)."""
     with transaction.atomic():
@@ -58,7 +59,7 @@ def update_price_list(*, user: User, price_list: PriceList, data: dict[str, Any]
     return price_list
 
 
-@audit(action="SOFT_DELETE", entity="PriceList")
+@audit(action=AuditAction.SOFT_DELETE, entity="PriceList")
 def soft_delete_price_list(*, user: User, price_list: PriceList) -> PriceList:
     """Baja lógica de una lista (409 si tiene fichas asignadas)."""
     with transaction.atomic():
@@ -71,7 +72,7 @@ def soft_delete_price_list(*, user: User, price_list: PriceList) -> PriceList:
 # --- Ítem de precio ----------------------------------------------------------
 
 
-@audit(action="CREATE", entity="PriceListItem")
+@audit(action=AuditAction.CREATE, entity="PriceListItem")
 def set_price_list_item(
     *, user: User, price_list: PriceList, data: dict[str, Any]
 ) -> PriceListItem:
@@ -83,7 +84,7 @@ def set_price_list_item(
     return item
 
 
-@audit(action="UPDATE", entity="PriceListItem")
+@audit(action=AuditAction.UPDATE, entity="PriceListItem")
 def update_price_list_item(
     *, user: User, item: PriceListItem, data: dict[str, Any]
 ) -> PriceListItem:
@@ -102,7 +103,7 @@ def update_price_list_item(
     return item
 
 
-@audit(action="DELETE", entity="PriceListItem")
+@audit(action=AuditAction.DELETE, entity="PriceListItem")
 def delete_price_list_item(*, user: User, item: PriceListItem) -> PriceListItem:
     """Quita un ítem de precio de la lista (borrado físico: no es catálogo clase 2)."""
     with transaction.atomic():

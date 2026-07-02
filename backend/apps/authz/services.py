@@ -13,6 +13,7 @@ from django.db import transaction
 
 from apps.accounts.models import User
 from apps.common.audit import audit
+from apps.common.audit_rules import AuditAction
 from apps.common.exceptions import Conflict
 
 from .catalog import SYSTEM_PROFILES, role_for_profile_name
@@ -34,7 +35,7 @@ def visible_fields_for(profile: Profile | None) -> set[str]:
     return set(profile.visible_sensitive_fields or [])
 
 
-@audit(action="UPDATE", entity="User")
+@audit(action=AuditAction.UPDATE, entity="User")
 def assign_profile(*, user: User, target: User, profile: Profile) -> User:
     """Asigna `profile` a `target`, sincroniza el `role` nominal e invalida las sesiones.
 
@@ -58,7 +59,7 @@ def assign_profile(*, user: User, target: User, profile: Profile) -> User:
     return target
 
 
-@audit(action="UPDATE", entity="Profile")
+@audit(action=AuditAction.UPDATE, entity="Profile")
 def update_profile_permissions(*, user: User, profile: Profile, data: dict[str, Any]) -> Profile:
     """Aplica los cambios validados de un perfil (permisos, campos visibles, descripción, flags)."""
     with transaction.atomic():
@@ -68,7 +69,7 @@ def update_profile_permissions(*, user: User, profile: Profile, data: dict[str, 
     return profile
 
 
-@audit(action="SOFT_DELETE", entity="Profile")
+@audit(action=AuditAction.SOFT_DELETE, entity="Profile")
 def deactivate_profile(*, user: User, profile: Profile) -> Profile:
     """Da de baja (soft delete clase 2) un perfil sin usuarios asignados.
 

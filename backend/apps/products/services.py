@@ -18,6 +18,7 @@ from django.db import transaction
 
 from apps.accounts.models import User
 from apps.common.audit import audit
+from apps.common.audit_rules import AuditAction
 from apps.common.exceptions import Conflict
 
 from .models import Category, Product, UnitOfMeasure
@@ -50,7 +51,7 @@ def _ensure_unique_unit_name(name: str, *, exclude_pk: Any = None) -> None:
 # --- Categoría ---------------------------------------------------------------
 
 
-@audit(action="CREATE", entity="Category")
+@audit(action=AuditAction.CREATE, entity="Category")
 def create_category(*, user: User, data: dict[str, Any]) -> Category:
     """Crea una categoría con nombre único entre las vivas (409 si choca)."""
     with transaction.atomic():
@@ -59,7 +60,7 @@ def create_category(*, user: User, data: dict[str, Any]) -> Category:
     return category
 
 
-@audit(action="UPDATE", entity="Category")
+@audit(action=AuditAction.UPDATE, entity="Category")
 def update_category(*, user: User, category: Category, data: dict[str, Any]) -> Category:
     """Edita una categoría revalidando la unicidad de nombre (excluye su propio pk)."""
     with transaction.atomic():
@@ -71,7 +72,7 @@ def update_category(*, user: User, category: Category, data: dict[str, Any]) -> 
     return category
 
 
-@audit(action="SOFT_DELETE", entity="Category")
+@audit(action=AuditAction.SOFT_DELETE, entity="Category")
 def deactivate_category(*, user: User, category: Category) -> Category:
     """Baja lógica de una categoría (409 si tiene productos vivos asociados)."""
     with transaction.atomic():
@@ -84,7 +85,7 @@ def deactivate_category(*, user: User, category: Category) -> Category:
 # --- Producto ----------------------------------------------------------------
 
 
-@audit(action="CREATE", entity="Product")
+@audit(action=AuditAction.CREATE, entity="Product")
 def create_product(*, user: User, data: dict[str, Any]) -> Product:
     """Crea un producto con nombre único entre los vivos (409 si choca)."""
     with transaction.atomic():
@@ -93,7 +94,7 @@ def create_product(*, user: User, data: dict[str, Any]) -> Product:
     return product
 
 
-@audit(action="UPDATE", entity="Product")
+@audit(action=AuditAction.UPDATE, entity="Product")
 def update_product(*, user: User, product: Product, data: dict[str, Any]) -> Product:
     """Edita un producto revalidando la unicidad de nombre (excluye su propio pk)."""
     with transaction.atomic():
@@ -105,7 +106,7 @@ def update_product(*, user: User, product: Product, data: dict[str, Any]) -> Pro
     return product
 
 
-@audit(action="SOFT_DELETE", entity="Product")
+@audit(action=AuditAction.SOFT_DELETE, entity="Product")
 def deactivate_product(*, user: User, product: Product) -> Product:
     """Baja lógica de un producto."""
     with transaction.atomic():
@@ -116,7 +117,7 @@ def deactivate_product(*, user: User, product: Product) -> Product:
 # --- Unidad de medida --------------------------------------------------------
 
 
-@audit(action="CREATE", entity="UnitOfMeasure")
+@audit(action=AuditAction.CREATE, entity="UnitOfMeasure")
 def create_unit(*, user: User, data: dict[str, Any]) -> UnitOfMeasure:
     """Crea una unidad de medida con nombre único entre las vivas (409 si choca)."""
     with transaction.atomic():
@@ -125,7 +126,7 @@ def create_unit(*, user: User, data: dict[str, Any]) -> UnitOfMeasure:
     return unit
 
 
-@audit(action="UPDATE", entity="UnitOfMeasure")
+@audit(action=AuditAction.UPDATE, entity="UnitOfMeasure")
 def update_unit(*, user: User, unit: UnitOfMeasure, data: dict[str, Any]) -> UnitOfMeasure:
     """Edita una unidad revalidando la unicidad de nombre (excluye su propio pk)."""
     with transaction.atomic():
@@ -137,7 +138,7 @@ def update_unit(*, user: User, unit: UnitOfMeasure, data: dict[str, Any]) -> Uni
     return unit
 
 
-@audit(action="SOFT_DELETE", entity="UnitOfMeasure")
+@audit(action=AuditAction.SOFT_DELETE, entity="UnitOfMeasure")
 def deactivate_unit(*, user: User, unit: UnitOfMeasure) -> UnitOfMeasure:
     """Baja lógica de una unidad (409 si tiene productos vivos asociados)."""
     with transaction.atomic():
